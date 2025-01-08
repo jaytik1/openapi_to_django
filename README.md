@@ -1,0 +1,30 @@
+# OpenAPI to Django
+
+Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.0.3](https://img.shields.io/badge/OpenAPI-3.0.3-85ea2d)](https://spec.openapis.org/oas/v3.0.3.html) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://mit-license.org/).
+
+## Overview
+
+This is a Python project designed to convert OpenAPI specifications to skeleton Django projects.
+
+While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can generate OpenAPI specs from Python code (which is itself very useful), there are fewer available to do the inverse, generating a backend server from an OpenAPI spec document. OpenAPITools' [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) supports generating server stubs from OpenAPI specifications, but it currently doesn't support Django (as of 8th Jan 2025), so I decided I'd give it a go!
+
+## Features
+
+- The repo exists!
+
+## In Progress
+
+- Set up the project
+  - [x] Update `.gitignore` to ignore files to be kept locally
+  - [x] Write initial `README.md`
+  - [ ] Create directory structure
+
+## Future Work
+
+- [ ] Parse OpenAPI YAML files
+- [ ] Parse OpenAPI JSON files
+- [ ] Automatically generate a base Django project
+- [ ] Update `urls.py` to map to each endpoint in the OpenAPI spec
+- [ ] Update `views.py` to contain the methods specified in `urls.py`
+- [ ] CI support to ensure Django code always matches the OpenAPI specification
+- [ ] Update to support OpenAPI v3.1.1
