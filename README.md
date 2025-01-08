@@ -1,6 +1,6 @@
 # OpenAPI to Django
 
-Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.0.3](https://img.shields.io/badge/OpenAPI-3.0.3-85ea2d)](https://spec.openapis.org/oas/v3.0.3.html) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://mit-license.org/).
+Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.0.3](https://img.shields.io/badge/OpenAPI-3.0.3-85ea2d)](https://spec.openapis.org/oas/v3.0.3.html) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit).
 
 ## Overview
 
