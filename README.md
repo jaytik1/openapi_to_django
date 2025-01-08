@@ -10,9 +10,14 @@ While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can gener
 
 ## Features
 
-- The repo exists!
+- Example OpenAPI specification documents
+  - Currently just `openapi/example.yaml`, with `openapi/example.json` coming soon
+  - Designed to cover a range of OpenAPI v3.0.3 features to demonstrate the project
+  - ... (more detail coming soon)
 
 ## Future Work
+
+*See the respository's GitHub Issues for nearby updates.*
 
 - CI support to ensure Django code always matches the OpenAPI specification
 - Update to support OpenAPI v3.1.1
