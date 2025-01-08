@@ -17,7 +17,7 @@ While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can gener
 - Set up the project
   - [x] Update `.gitignore` to ignore files to be kept locally
   - [x] Write initial `README.md`
-  - [ ] Create directory structure
+  - [x] Create directory structure
 
 ## Future Work
 
