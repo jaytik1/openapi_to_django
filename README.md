@@ -12,19 +12,7 @@ While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can gener
 
 - The repo exists!
 
-## In Progress
-
-- Set up the project
-  - [x] Update `.gitignore` to ignore files to be kept locally
-  - [x] Write initial `README.md`
-  - [x] Create directory structure
-
 ## Future Work
 
-- [ ] Parse OpenAPI YAML files
-- [ ] Parse OpenAPI JSON files
-- [ ] Automatically generate a base Django project
-- [ ] Update `urls.py` to map to each endpoint in the OpenAPI spec
-- [ ] Update `views.py` to contain the methods specified in `urls.py`
-- [ ] CI support to ensure Django code always matches the OpenAPI specification
-- [ ] Update to support OpenAPI v3.1.1
+- CI support to ensure Django code always matches the OpenAPI specification
+- Update to support OpenAPI v3.1.1
