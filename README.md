@@ -15,7 +15,7 @@ While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can gener
   - Designed to cover a range of OpenAPI 3.0 features to demonstrate the project
   - Contains examples of endpoints supporting GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH and TRACE operations
   - Contains examples of each data type permitted by the specification (`null`, `boolean`, `object`, `array`, `number`, `string` and `integer`), as well as various `format` values
-  - ...
+  - Contains components which are reused in various places in the document, including requests, responses, schemas and a basic security scheme
 
 ## Future Work
 
