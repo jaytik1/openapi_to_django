@@ -1,5 +1,7 @@
 import argparse
 import os
+import yaml
+from typing import Any, Mapping
 
 
 YAML_EXTENSIONS = [".yaml", ".yml"]
@@ -19,16 +21,35 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.parse_yaml:
-        parse_yaml(args.filepath)
+        openapi = parse_yaml(args.filepath)
     elif os.path.splitext(args.filepath)[1] in YAML_EXTENSIONS:
         # parse file as YAML if the given file has a YAML extension
-        parse_yaml(args.filepath)
+        openapi = parse_yaml(args.filepath)
     else:
         print("File type not determined, use -y to parse as YAML.")
+        return
+
+    print(openapi)
 
 
-def parse_yaml(filepath: str) -> None:
-    print(filepath)
+# TODO make a more precise return type definition
+def parse_yaml(filepath: str) -> Mapping[str, Any]:
+    """Parse a YAML file into a Python dictionary.
+
+    Args:
+        filepath: Path of the YAML file to be parsed.
+
+    Returns:
+        Python dictionary representing the YAML file.
+    """
+    try:
+        with open(filepath) as yaml_file:
+            try:
+                return yaml.safe_load(yaml_file)
+            except yaml.YAMLError as exc:
+                print(exc)
+    except FileNotFoundError:
+        print(f"File {filepath} not found.")
 
 
 if __name__ == "__main__":
