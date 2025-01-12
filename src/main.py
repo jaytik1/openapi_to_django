@@ -2,7 +2,7 @@ import argparse
 import os
 
 
-YAML_EXTENSIONS = ["yaml", "yml"]
+YAML_EXTENSIONS = [".yaml", ".yml"]
 
 
 def main() -> None:
