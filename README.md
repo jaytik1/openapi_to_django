@@ -8,6 +8,21 @@ This is a Python project designed to convert OpenAPI documents to skeleton Djang
 
 While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can generate OpenAPI documents from Python code (which is itself very useful), there are fewer available to do the inverse, generating a backend server from an OpenAPI document. OpenAPITools' [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) includes generating server stubs from OpenAPI documents, but it currently doesn't support Django (as of 8th Jan 2025), so I decided I'd give it a go!
 
+## Running the Tool
+
+### Set Up a Virtual Environment
+
+```bash
+# create a virtual environment
+python3 -m venv .venv
+
+# activate the virtual environment (Linux/MacOS)
+source .venv/bin/activate
+
+# install required packages
+pip install -r requirements.txt
+```
+
 ## Features
 
 - Example OpenAPI documents
