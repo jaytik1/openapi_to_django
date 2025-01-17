@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 
 INDENT_SPACES = 2
+JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
 
@@ -19,6 +20,12 @@ def main() -> None:
         "-y",
         "--parse-yaml",
         help="specify that the given file should be parsed as YAML",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-c",
+        "--convert",
+        help="convert the given file from YAML to JSON or vice versa",
         action="store_true",
     )
 
@@ -33,7 +40,10 @@ def main() -> None:
         print("File type not determined, use -y to parse as YAML.")
         return
 
-    write_json(openapi)
+    if args.convert:
+        # convert YAML file to JSON file with the same file name
+        write_json(openapi, os.path.splitext(args.filepath)[0] + JSON_EXTENSIONS[0])
+
     print(openapi)
 
 
