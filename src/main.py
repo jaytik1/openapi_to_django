@@ -17,6 +17,12 @@ def main() -> None:
 
     parser.add_argument("filepath", help="file path of the OpenAPI document")
     parser.add_argument(
+        "-j",
+        "--parse-json",
+        help="specify that the given file should be parsed as JSON",
+        action="store_true",
+    )
+    parser.add_argument(
         "-y",
         "--parse-yaml",
         help="specify that the given file should be parsed as YAML",
@@ -31,20 +37,35 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.parse_yaml:
-        openapi = parse_yaml(args.filepath)
-    elif os.path.splitext(args.filepath)[1] in YAML_EXTENSIONS:
-        # parse file as YAML if the given file has a YAML extension
+    if args.parse_json and args.parse_yaml:
+        print("Specify the file as either JSON or YAML, not both.")
+        return
+
+    file_name, file_extension = os.path.splitext(args.filepath)
+
+    if args.parse_json:
+        openapi = parse_json(args.filepath)
+    elif args.parse_yaml:
         openapi = parse_yaml(args.filepath)
     else:
-        print("File type not determined, use -y to parse as YAML.")
-        return
+        if file_extension in JSON_EXTENSIONS:
+            openapi = parse_json(args.filepath)
+        elif file_extension in YAML_EXTENSIONS:
+            openapi = parse_yaml(args.filepath)
+        else:
+            print("File type not determined, use -j or -y to parse as JSON or YAML.")
+            return
 
     if args.convert:
         # convert YAML file to JSON file with the same file name
-        write_json(openapi, os.path.splitext(args.filepath)[0] + JSON_EXTENSIONS[0])
+        write_json(openapi, file_name + JSON_EXTENSIONS[0])
 
     print(openapi)
+
+
+# TODO make a more precise return type definition
+def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
+    pass  # TODO
 
 
 # TODO make a more precise return type definition
