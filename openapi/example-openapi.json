@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "OpenAPI to Djago YAML Example",
+    "title": "OpenAPI to Django Example",
     "description": "This is an example document for the [OpenAPI to Django](https://github.com/jaytik1/openapi-to-django) project, used to convert OpenAPI specifications into Django skeleton projects.",
     "license": {
       "name": "MIT License",
