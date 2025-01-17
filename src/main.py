@@ -74,8 +74,11 @@ def main() -> None:
         return
 
     if args.convert:
-        # convert YAML file to JSON file with the same file name
-        write_json(openapi, file_name + JSON_EXTENSIONS[0])
+        # write to a YAML or JSON file with the same file name as the input
+        if filetype == FileType.JSON:
+            write_yaml(openapi, file_name + YAML_EXTENSIONS[0])
+        elif filetype == FileType.YAML:
+            write_json(openapi, file_name + JSON_EXTENSIONS[0])
 
     print(openapi)
 
