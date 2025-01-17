@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import os
+import subprocess
 import yaml
 from enum import Enum
 from pathlib import Path
@@ -11,6 +12,9 @@ from typing import Any, Mapping
 INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
+
+PROJECT_NAME = "openapi_django"
+APP_NAME = PROJECT_NAME + "_app"
 
 
 class FileType(Enum):
@@ -79,6 +83,29 @@ def main() -> None:
             write_yaml(openapi, file_name + YAML_EXTENSIONS[0])
         elif filetype == FileType.YAML:
             write_json(openapi, file_name + JSON_EXTENSIONS[0])
+
+    # attempt to create a new Django project
+    try:
+        subprocess.run(["django-admin", "startproject", PROJECT_NAME], check=True)
+    except subprocess.CalledProcessError:
+        print("Something went wrong when creating the Django project.")
+        return
+
+    # attempt to create a new app in the new Django project
+    try:
+        subprocess.run(
+            [
+                "python3",
+                "manage.py",
+                "startapp",
+                APP_NAME,
+            ],
+            check=True,
+            cwd=PROJECT_NAME,  # run this in the new project's directory
+        )
+    except subprocess.CalledProcessError:
+        print("Something went wrong when creating the Django app.")
+        return
 
     print(openapi)
 
