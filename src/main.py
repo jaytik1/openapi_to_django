@@ -17,52 +17,94 @@ def main() -> None:
 
     parser.add_argument("filepath", help="file path of the OpenAPI document")
     parser.add_argument(
-        "-y",
-        "--parse-yaml",
-        help="specify that the given file should be parsed as YAML",
-        action="store_true",
-    )
-    parser.add_argument(
         "-c",
         "--convert",
         help="convert the given file from YAML to JSON or vice versa",
         action="store_true",
     )
 
+    # arguments for specifying the file type
+    group_filetype = parser.add_argument_group(
+        "specify filetype", "Specify the filetype of the given file."
+    )
+    exclusive_group_filetype = group_filetype.add_mutually_exclusive_group()
+    exclusive_group_filetype.add_argument(
+        "-j",
+        "--parse-json",
+        help="specify that the given file should be parsed as JSON",
+        action="store_true",
+    )
+    exclusive_group_filetype.add_argument(
+        "-y",
+        "--parse-yaml",
+        help="specify that the given file should be parsed as YAML",
+        action="store_true",
+    )
+
     args = parser.parse_args()
 
-    if args.parse_yaml:
-        openapi = parse_yaml(args.filepath)
-    elif os.path.splitext(args.filepath)[1] in YAML_EXTENSIONS:
-        # parse file as YAML if the given file has a YAML extension
+    file_name, file_extension = os.path.splitext(args.filepath)
+
+    # checks if the filetype has been explicitly specified first
+    if args.parse_json:
+        openapi = parse_json(args.filepath)
+    elif args.parse_yaml:
         openapi = parse_yaml(args.filepath)
     else:
-        print("File type not determined, use -y to parse as YAML.")
-        return
+        # attempts to identify a filetype from the file extension
+        if file_extension in JSON_EXTENSIONS:
+            openapi = parse_json(args.filepath)
+        elif file_extension in YAML_EXTENSIONS:
+            openapi = parse_yaml(args.filepath)
+        else:
+            print("File type not determined, use -j or -y to parse as JSON or YAML.")
+            return
 
     if args.convert:
         # convert YAML file to JSON file with the same file name
-        write_json(openapi, os.path.splitext(args.filepath)[0] + JSON_EXTENSIONS[0])
+        write_json(openapi, file_name + JSON_EXTENSIONS[0])
 
     print(openapi)
 
 
 # TODO make a more precise return type definition
-def parse_yaml(filepath: str) -> Mapping[str, Any]:
-    """Parse a YAML file into a Python dictionary.
+def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
+    """Parse a JSON file into a Python dictionary or list.
+
+    Args:
+        filepath: Path of the JSON file to be parsed.
+
+    Returns:
+        Python dictionary or list representing the JSON file.
+    """
+    try:
+        with open(filepath, "r") as json_file:
+            try:
+                return json.load(json_file)
+            except json.JSONDecodeError as e:
+                print(f"Error reading JSON file: {e}")
+            except UnicodeDecodeError as e:
+                print(f"Error reading JSON file: {e}")
+    except FileNotFoundError:
+        print(f"File {filepath} not found.")
+
+
+# TODO make a more precise return type definition
+def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
+    """Parse a YAML file into a Python dictionary or list.
 
     Args:
         filepath: Path of the YAML file to be parsed.
 
     Returns:
-        Python dictionary representing the YAML file.
+        Python dictionary or list representing the YAML file.
     """
     try:
-        with open(filepath) as yaml_file:
+        with open(filepath, "r") as yaml_file:
             try:
                 return yaml.safe_load(yaml_file)
-            except yaml.YAMLError as exc:
-                print(exc)
+            except yaml.YAMLError as e:
+                print(f"Error reading YAML file: {e}")
     except FileNotFoundError:
         print(f"File {filepath} not found.")
 
@@ -93,7 +135,7 @@ def write_json(data: Mapping[str, Any], filepath: str = "file.json") -> None:
             raise TypeError(e)
 
 
-def json_handle_value(value: Any):
+def json_handle_value(value: Any) -> str:
     """Attempt to convert a non-serialisable value into a JSON serialisable one.
 
     Args:
