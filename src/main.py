@@ -71,7 +71,7 @@ def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
 
 
 # TODO make a more precise return type definition
-def parse_yaml(filepath: str) -> Mapping[str, Any]:
+def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
     """Parse a YAML file into a Python dictionary.
 
     Args:
@@ -116,7 +116,7 @@ def write_json(data: Mapping[str, Any], filepath: str = "file.json") -> None:
             raise TypeError(e)
 
 
-def json_handle_value(value: Any):
+def json_handle_value(value: Any) -> str:
     """Attempt to convert a non-serialisable value into a JSON serialisable one.
 
     Args:
