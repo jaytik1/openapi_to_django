@@ -69,6 +69,14 @@ def main() -> None:
 
 # TODO make a more precise return type definition
 def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
+    """Parse a JSON file into a Python dictionary or list.
+
+    Args:
+        filepath: Path of the JSON file to be parsed.
+
+    Returns:
+        Python dictionary or list representing the JSON file.
+    """
     try:
         with open(filepath, "r") as json_file:
             try:
@@ -83,13 +91,13 @@ def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
 
 # TODO make a more precise return type definition
 def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
-    """Parse a YAML file into a Python dictionary.
+    """Parse a YAML file into a Python dictionary or list.
 
     Args:
         filepath: Path of the YAML file to be parsed.
 
     Returns:
-        Python dictionary representing the YAML file.
+        Python dictionary or list representing the YAML file.
     """
     try:
         with open(filepath, "r") as yaml_file:
