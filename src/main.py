@@ -88,7 +88,8 @@ def main() -> None:
     elif filetype == FileType.YAML:
         openapi = parse_yaml(args.filepath)
     else:
-        print("File type not determined, use -j or -y to parse as JSON or YAML.")
+        parser.print_help()
+        print("error: file type not determined, use -j or -y to parse as JSON or YAML")
         return
 
     if args.convert:
@@ -102,7 +103,7 @@ def main() -> None:
     try:
         subprocess.run(["django-admin", "startproject", args.project_name], check=True)
     except subprocess.CalledProcessError:
-        print("Something went wrong when creating the Django project.")
+        print("error: something went wrong when creating the Django project")
         return
 
     # attempt to create a new app in the new Django project
@@ -118,7 +119,7 @@ def main() -> None:
             cwd=args.project_name,  # run this in the new project's directory
         )
     except subprocess.CalledProcessError:
-        print("Something went wrong when creating the Django app.")
+        print("error: something went wrong when creating the Django app")
         return
 
     print(openapi)
@@ -139,11 +140,11 @@ def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
             try:
                 return json.load(json_file)
             except json.JSONDecodeError as e:
-                print(f"Error reading JSON file: {e}")
+                print(f"error: problem when reading JSON file: {e}")
             except UnicodeDecodeError as e:
-                print(f"Error reading JSON file: {e}")
+                print(f"error: problem when reading JSON file: {e}")
     except FileNotFoundError:
-        print(f"File {filepath} not found.")
+        print(f"error: file {filepath} not found")
 
 
 # TODO make a more precise return type definition
@@ -161,9 +162,9 @@ def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
             try:
                 return yaml.safe_load(yaml_file)
             except yaml.YAMLError as e:
-                print(f"Error reading YAML file: {e}")
+                print(f"error: problem when reading YAML file: {e}")
     except FileNotFoundError:
-        print(f"File {filepath} not found.")
+        print(f"error: file {filepath} not found")
 
 
 # TODO make a more precise data type definition
