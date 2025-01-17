@@ -45,11 +45,13 @@ def main() -> None:
 
     file_name, file_extension = os.path.splitext(args.filepath)
 
+    # checks if the filetype has been explicitly specified first
     if args.parse_json:
         openapi = parse_json(args.filepath)
     elif args.parse_yaml:
         openapi = parse_yaml(args.filepath)
     else:
+        # attempts to identify a filetype from the file extension
         if file_extension in JSON_EXTENSIONS:
             openapi = parse_json(args.filepath)
         elif file_extension in YAML_EXTENSIONS:
@@ -67,7 +69,16 @@ def main() -> None:
 
 # TODO make a more precise return type definition
 def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
-    pass  # TODO
+    try:
+        with open(filepath, "r") as json_file:
+            try:
+                return json.load(json_file)
+            except json.JSONDecodeError as e:
+                print(f"Error reading JSON file: {e}")
+            except UnicodeDecodeError as e:
+                print(f"Error reading JSON file: {e}")
+    except FileNotFoundError:
+        print(f"File {filepath} not found.")
 
 
 # TODO make a more precise return type definition
@@ -81,11 +92,11 @@ def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
         Python dictionary representing the YAML file.
     """
     try:
-        with open(filepath) as yaml_file:
+        with open(filepath, "r") as yaml_file:
             try:
                 return yaml.safe_load(yaml_file)
-            except yaml.YAMLError as exc:
-                print(exc)
+            except yaml.YAMLError as e:
+                print(f"Error reading YAML file: {e}")
     except FileNotFoundError:
         print(f"File {filepath} not found.")
 
