@@ -17,29 +17,31 @@ def main() -> None:
 
     parser.add_argument("filepath", help="file path of the OpenAPI document")
     parser.add_argument(
-        "-j",
-        "--parse-json",
-        help="specify that the given file should be parsed as JSON",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-y",
-        "--parse-yaml",
-        help="specify that the given file should be parsed as YAML",
-        action="store_true",
-    )
-    parser.add_argument(
         "-c",
         "--convert",
         help="convert the given file from YAML to JSON or vice versa",
         action="store_true",
     )
 
-    args = parser.parse_args()
+    # arguments for specifying the file type
+    group_filetype = parser.add_argument_group(
+        "specify filetype", "Specify the filetype of the given file."
+    )
+    exclusive_group_filetype = group_filetype.add_mutually_exclusive_group()
+    exclusive_group_filetype.add_argument(
+        "-j",
+        "--parse-json",
+        help="specify that the given file should be parsed as JSON",
+        action="store_true",
+    )
+    exclusive_group_filetype.add_argument(
+        "-y",
+        "--parse-yaml",
+        help="specify that the given file should be parsed as YAML",
+        action="store_true",
+    )
 
-    if args.parse_json and args.parse_yaml:
-        print("Specify the file as either JSON or YAML, not both.")
-        return
+    args = parser.parse_args()
 
     file_name, file_extension = os.path.splitext(args.filepath)
 
