@@ -191,7 +191,7 @@ def write_yaml(
         raise OSError(f"File already exists at given filepath: {filepath}.")
 
     with open(filepath_object, "w") as yaml_file:
-        yaml.dump(data, yaml_file, indent=INDENT_SPACES)
+        yaml.dump(data, yaml_file, indent=INDENT_SPACES, sort_keys=False)
 
 
 if __name__ == "__main__":
