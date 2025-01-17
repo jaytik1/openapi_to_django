@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import os
+import subprocess
 import yaml
 from enum import Enum
 from pathlib import Path
@@ -11,6 +12,9 @@ from typing import Any, Mapping
 INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
+
+DEFAULT_PROJECT_NAME = "openapi_django"
+DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
 
 
 class FileType(Enum):
@@ -29,7 +33,21 @@ def main() -> None:
         action="store_true",
     )
 
-    # arguments for specifying the file type
+    # arguments for setting up Django
+    parser.add_argument(
+        "-p",
+        "--project-name",
+        help="name of the Django project being created",
+        default=DEFAULT_PROJECT_NAME,
+    )
+    parser.add_argument(
+        "-a",
+        "--app-name",
+        help="name of the Django app being created",
+        default=DEFAULT_APP_NAME,
+    )
+
+    # arguments for specifying the OpenAPI document file type
     group_filetype = parser.add_argument_group(
         "specify filetype", "Specify the filetype of the given file."
     )
@@ -70,7 +88,8 @@ def main() -> None:
     elif filetype == FileType.YAML:
         openapi = parse_yaml(args.filepath)
     else:
-        print("File type not determined, use -j or -y to parse as JSON or YAML.")
+        parser.print_help()
+        print("error: file type not determined, use -j or -y to parse as JSON or YAML")
         return
 
     if args.convert:
@@ -79,6 +98,29 @@ def main() -> None:
             write_yaml(openapi, file_name + YAML_EXTENSIONS[0])
         elif filetype == FileType.YAML:
             write_json(openapi, file_name + JSON_EXTENSIONS[0])
+
+    # attempt to create a new Django project
+    try:
+        subprocess.run(["django-admin", "startproject", args.project_name], check=True)
+    except subprocess.CalledProcessError:
+        print("error: something went wrong when creating the Django project")
+        return
+
+    # attempt to create a new app in the new Django project
+    try:
+        subprocess.run(
+            [
+                "python3",
+                "manage.py",
+                "startapp",
+                args.app_name,
+            ],
+            check=True,
+            cwd=args.project_name,  # run this in the new project's directory
+        )
+    except subprocess.CalledProcessError:
+        print("error: something went wrong when creating the Django app")
+        return
 
     print(openapi)
 
@@ -98,11 +140,11 @@ def parse_json(filepath: str) -> Mapping[str, Any] | list[Any]:
             try:
                 return json.load(json_file)
             except json.JSONDecodeError as e:
-                print(f"Error reading JSON file: {e}")
+                print(f"error: problem when reading JSON file: {e}")
             except UnicodeDecodeError as e:
-                print(f"Error reading JSON file: {e}")
+                print(f"error: problem when reading JSON file: {e}")
     except FileNotFoundError:
-        print(f"File {filepath} not found.")
+        print(f"error: file {filepath} not found")
 
 
 # TODO make a more precise return type definition
@@ -120,9 +162,9 @@ def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
             try:
                 return yaml.safe_load(yaml_file)
             except yaml.YAMLError as e:
-                print(f"Error reading YAML file: {e}")
+                print(f"error: problem when reading YAML file: {e}")
     except FileNotFoundError:
-        print(f"File {filepath} not found.")
+        print(f"error: file {filepath} not found")
 
 
 # TODO make a more precise data type definition
