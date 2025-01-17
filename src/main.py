@@ -13,8 +13,8 @@ INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
-PROJECT_NAME = "openapi_django"
-APP_NAME = PROJECT_NAME + "_app"
+DEFAULT_PROJECT_NAME = "openapi_django"
+DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
 
 
 class FileType(Enum):
@@ -33,7 +33,21 @@ def main() -> None:
         action="store_true",
     )
 
-    # arguments for specifying the file type
+    # arguments for setting up Django
+    parser.add_argument(
+        "-p",
+        "--project-name",
+        help="name of the Django project being created",
+        default=DEFAULT_PROJECT_NAME,
+    )
+    parser.add_argument(
+        "-a",
+        "--app-name",
+        help="name of the Django app being created",
+        default=DEFAULT_APP_NAME,
+    )
+
+    # arguments for specifying the OpenAPI document file type
     group_filetype = parser.add_argument_group(
         "specify filetype", "Specify the filetype of the given file."
     )
@@ -86,7 +100,7 @@ def main() -> None:
 
     # attempt to create a new Django project
     try:
-        subprocess.run(["django-admin", "startproject", PROJECT_NAME], check=True)
+        subprocess.run(["django-admin", "startproject", args.project_name], check=True)
     except subprocess.CalledProcessError:
         print("Something went wrong when creating the Django project.")
         return
@@ -98,10 +112,10 @@ def main() -> None:
                 "python3",
                 "manage.py",
                 "startapp",
-                APP_NAME,
+                args.app_name,
             ],
             check=True,
-            cwd=PROJECT_NAME,  # run this in the new project's directory
+            cwd=args.project_name,  # run this in the new project's directory
         )
     except subprocess.CalledProcessError:
         print("Something went wrong when creating the Django app.")
