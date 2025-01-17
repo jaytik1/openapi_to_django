@@ -110,7 +110,9 @@ def parse_yaml(filepath: str) -> Mapping[str, Any] | list[Any]:
 
 
 # TODO make a more precise data type definition
-def write_json(data: Mapping[str, Any], filepath: str = "file.json") -> None:
+def write_json(
+    data: Mapping[str, Any] | list[Any], filepath: str = "file.json"
+) -> None:
     """Take an object, convert it to JSON and save it to a JSON file.
 
     Args:
@@ -152,6 +154,28 @@ def json_handle_value(value: Any) -> str:
         return value.isoformat()
     else:
         raise TypeError(f"Value {value} is not JSON serialisable.")
+
+
+# TODO make a more precise data type definition
+def write_yaml(
+    data: Mapping[str, Any] | list[Any], filepath: str = "file.yaml"
+) -> None:
+    """Take an object, convert it to YAML and save it to a YAML file.
+
+    Args:
+        data: Python dictionary or list data to be saved as YAML.
+        filepath: Path of the YAML file that should be written.
+
+    Raises:
+        OSError: Attempted to overwrite an existing file.
+    """
+    filepath_object = Path(filepath)
+
+    if filepath_object.exists():
+        raise OSError(f"File already exists at given filepath: {filepath}.")
+
+    with open(filepath_object, "w") as yaml_file:
+        yaml.dump(data, yaml_file, indent=INDENT_SPACES)
 
 
 if __name__ == "__main__":
