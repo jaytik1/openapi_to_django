@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import yaml
+from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -10,6 +11,11 @@ from typing import Any, Mapping
 INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
+
+
+class FileType(Enum):
+    JSON = "json"
+    YAML = "yaml"
 
 
 def main() -> None:
@@ -44,21 +50,28 @@ def main() -> None:
     args = parser.parse_args()
 
     file_name, file_extension = os.path.splitext(args.filepath)
+    filetype: FileType | None = None
 
-    # checks if the filetype has been explicitly specified first
+    # checks if the file type has been explicitly specified first
     if args.parse_json:
-        openapi = parse_json(args.filepath)
+        filetype = FileType.JSON
     elif args.parse_yaml:
+        filetype = FileType.YAML
+    else:
+        # attempts to identify a file type from the file extension
+        if file_extension in JSON_EXTENSIONS:
+            filetype = FileType.JSON
+        elif file_extension in YAML_EXTENSIONS:
+            filetype = FileType.YAML
+
+    # parse the file according to the determined file type
+    if filetype == FileType.JSON:
+        openapi = parse_json(args.filepath)
+    elif filetype == FileType.YAML:
         openapi = parse_yaml(args.filepath)
     else:
-        # attempts to identify a filetype from the file extension
-        if file_extension in JSON_EXTENSIONS:
-            openapi = parse_json(args.filepath)
-        elif file_extension in YAML_EXTENSIONS:
-            openapi = parse_yaml(args.filepath)
-        else:
-            print("File type not determined, use -j or -y to parse as JSON or YAML.")
-            return
+        print("File type not determined, use -j or -y to parse as JSON or YAML.")
+        return
 
     if args.convert:
         # convert YAML file to JSON file with the same file name
