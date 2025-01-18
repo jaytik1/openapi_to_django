@@ -108,19 +108,13 @@ def main() -> None:
         return
 
     # attempt to create a new app in the new Django project
+    app_directory = os.path.join(args.project_name, args.app_name)
+    os.mkdir(app_directory)
+
     try:
-        subprocess.run(
-            [
-                "python3",
-                "manage.py",
-                "startapp",
-                args.app_name,
-            ],
-            check=True,
-            cwd=args.project_name,  # run this in the new project's directory
-        )
-    except subprocess.CalledProcessError:
-        print("error: something went wrong when creating the Django app")
+        call_command("startapp", args.app_name, app_directory)
+    except CommandError as e:
+        print(f"error: something went wrong when creating the Django app: {e}")
         return
 
     print(openapi)
