@@ -7,7 +7,8 @@ import yaml
 from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
-
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
@@ -101,9 +102,9 @@ def main() -> None:
 
     # attempt to create a new Django project
     try:
-        subprocess.run(["django-admin", "startproject", args.project_name], check=True)
-    except subprocess.CalledProcessError:
-        print("error: something went wrong when creating the Django project")
+        call_command("startproject", args.project_name)
+    except CommandError as e:
+        print(f"error: something went wrong when creating the Django project: {e}")
         return
 
     # attempt to create a new app in the new Django project
