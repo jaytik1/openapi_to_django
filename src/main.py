@@ -114,10 +114,12 @@ def main() -> None:
         os.mkdir(app_directory)
     except FileExistsError:
         print("error: app folder could not be made as it already exists")
+        return
     except FileNotFoundError:
         print(
             "error: app folder could not be made as its parent directory doesn't exist"
         )
+        return
 
     try:
         call_command("startapp", args.app_name, app_directory)
