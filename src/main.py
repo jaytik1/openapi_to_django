@@ -109,7 +109,15 @@ def main() -> None:
 
     # attempt to create a new app in the new Django project
     app_directory = os.path.join(args.project_name, args.app_name)
-    os.mkdir(app_directory)
+
+    try:
+        os.mkdir(app_directory)
+    except FileExistsError:
+        print("error: app folder could not be made as it already exists")
+    except FileNotFoundError:
+        print(
+            "error: app folder could not be made as its parent directory doesn't exist"
+        )
 
     try:
         call_command("startapp", args.app_name, app_directory)
