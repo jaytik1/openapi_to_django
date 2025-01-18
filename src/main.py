@@ -7,7 +7,8 @@ import yaml
 from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
-
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 INDENT_SPACES = 2
 JSON_EXTENSIONS = [".json"]
@@ -101,25 +102,29 @@ def main() -> None:
 
     # attempt to create a new Django project
     try:
-        subprocess.run(["django-admin", "startproject", args.project_name], check=True)
-    except subprocess.CalledProcessError:
-        print("error: something went wrong when creating the Django project")
+        call_command("startproject", args.project_name)
+    except CommandError as e:
+        print(f"error: something went wrong when creating the Django project: {e}")
         return
 
     # attempt to create a new app in the new Django project
+    app_directory = os.path.join(args.project_name, args.app_name)
+
     try:
-        subprocess.run(
-            [
-                "python3",
-                "manage.py",
-                "startapp",
-                args.app_name,
-            ],
-            check=True,
-            cwd=args.project_name,  # run this in the new project's directory
+        os.mkdir(app_directory)
+    except FileExistsError:
+        print("error: app folder could not be made as it already exists")
+        return
+    except FileNotFoundError:
+        print(
+            "error: app folder could not be made as its parent directory doesn't exist"
         )
-    except subprocess.CalledProcessError:
-        print("error: something went wrong when creating the Django app")
+        return
+
+    try:
+        call_command("startapp", args.app_name, app_directory)
+    except CommandError as e:
+        print(f"error: something went wrong when creating the Django app: {e}")
         return
 
     print(openapi)
