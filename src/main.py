@@ -104,9 +104,7 @@ def main() -> None:
 
     # attempt to create a new Django project
     try:
-        call_command(
-            "startproject", args.project_name, "--template", PROJECT_TEMPLATE_DIR
-        )
+        call_command("startproject", args.project_name, template=PROJECT_TEMPLATE_DIR)
     except CommandError as e:
         print(f"error: something went wrong when creating the Django project: {e}")
         return
@@ -127,7 +125,10 @@ def main() -> None:
 
     try:
         call_command(
-            "startapp", args.app_name, app_directory, "--template", APP_TEMPLATE_DIR
+            "startapp",
+            args.app_name,
+            app_directory,
+            template=APP_TEMPLATE_DIR,
         )
     except CommandError as e:
         print(f"error: something went wrong when creating the Django app: {e}")
