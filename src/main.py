@@ -15,7 +15,9 @@ JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
 DEFAULT_PROJECT_NAME = "openapi_django"
+PROJECT_TEMPLATE_DIR = os.path.join("templates", "project_template")
 DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
+APP_TEMPLATE_DIR = os.path.join("templates", "app_template")
 
 
 class FileType(Enum):
@@ -102,7 +104,9 @@ def main() -> None:
 
     # attempt to create a new Django project
     try:
-        call_command("startproject", args.project_name)
+        call_command(
+            "startproject", args.project_name, "--template", PROJECT_TEMPLATE_DIR
+        )
     except CommandError as e:
         print(f"error: something went wrong when creating the Django project: {e}")
         return
@@ -122,7 +126,9 @@ def main() -> None:
         return
 
     try:
-        call_command("startapp", args.app_name, app_directory)
+        call_command(
+            "startapp", args.app_name, app_directory, "--template", APP_TEMPLATE_DIR
+        )
     except CommandError as e:
         print(f"error: something went wrong when creating the Django app: {e}")
         return

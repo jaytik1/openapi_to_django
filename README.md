@@ -62,3 +62,10 @@ python3 src/main.py -convert <openapi_yaml_file>
 
 - CI support to ensure Django code always matches the OpenAPI document
 - Support multi-document OpenAPI Descriptions (OADs)
+
+## Licensing
+
+- This repository is distributed under the MIT license
+  - See the LICENSE file in the project's root directory
+- As project and app templates have been copied and modified from the Django source code, the Django 5.1.5 BSD-3 Clause LICENSE file is also included
+  - See the LICENSE_DJANGO file in `templates/`
