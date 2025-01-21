@@ -2,7 +2,6 @@ import argparse
 import datetime
 import json
 import os
-import subprocess
 import yaml
 from enum import Enum
 from pathlib import Path
