@@ -1,0 +1,22 @@
+{% spaceless %}
+{% comment %}
+
+Template file for rendering urls.py entries for each OpenAPI endpoint.
+Specify how the endpoints parsed from the OpenAPI document should be added to Django's urls.py file.
+
+Context Variables:
+- tags: a list of tags parsed from the OpenAPI file
+
+{% endcomment %}
+
+{% comment %} Include imports if not writing to an existing urls.py file. {% endcomment %}
+{% if not urls_exists %}
+from django.contrib import admin
+from django.urls import path
+{% endif %}
+{% endspaceless %}
+
+### OpenAPI to Django Endpoints ###
+{% for tag in tags %}
+## {{ tag }} Endpoints ##
+{% endfor %}
