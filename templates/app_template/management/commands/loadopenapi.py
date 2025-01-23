@@ -3,8 +3,11 @@ import os
 import yaml
 from django.core.management.base import BaseCommand, CommandError
 from django.template import Context, Engine
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Self
+
+# TODO make a more precise type definition for the openapi variable
 
 
 JSON_EXTENSIONS = [".json"]
@@ -14,6 +17,13 @@ YAML_EXTENSIONS = [".yaml", ".yml"]
 class FileType(Enum):
     JSON = "json"
     YAML = "yaml"
+
+
+@dataclass
+class Url:
+    """Stores URL data in a structured way."""
+
+    path: str
 
 
 class Command(BaseCommand):
@@ -111,8 +121,10 @@ class Command(BaseCommand):
         # converts the urls.py template file content to a renderable Template object
         urls_template = Engine().from_string(urls_template_string)
 
+        urls = self.get_openapi_urls(openapi)
+
         context = Context(
-            {"tags": ["ex1", "ex2", "ex3"], "urls_exists": urls_exists},
+            {"urls": urls, "urls_exists": urls_exists},
             autoescape=False,
         )
         rendered_urls = urls_template.render(context)
@@ -122,7 +134,6 @@ class Command(BaseCommand):
 
         print("Loaded URLs.")
 
-    # TODO make a more precise return type definition
     def parse_json(self: Self, filepath: str) -> Mapping[str, Any] | list[Any]:
         """Parse a JSON file into a Python dictionary or list.
 
@@ -140,7 +151,6 @@ class Command(BaseCommand):
             except UnicodeDecodeError as e:
                 print(f"error: problem when reading JSON file: {e}")
 
-    # TODO make a more precise return type definition
     def parse_yaml(self: Self, filepath: str) -> Mapping[str, Any] | list[Any]:
         """Parse a YAML file into a Python dictionary or list.
 
@@ -155,3 +165,22 @@ class Command(BaseCommand):
                 return yaml.safe_load(yaml_file)
             except yaml.YAMLError as e:
                 print(f"error: problem when reading YAML file: {e}")
+
+    def get_openapi_urls(
+        self: Self, openapi: Mapping[str, Any] | list[Any]
+    ) -> list[Url]:
+        """Get each URL present in an OpenAPI document.
+
+        Args:
+            openapi: Python representation of an OpenAPI document.
+
+        Returns:
+            A list of Url dataclass objects to be passed to the template.
+        """
+
+        urls = []
+
+        for path_name, path_content in openapi["paths"].items():
+            urls.append(Url(path_name))
+
+        return urls

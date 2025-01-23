@@ -7,16 +7,23 @@ Specify how the endpoints parsed from the OpenAPI document should be added to Dj
 Context Variables:
 - tags: a list of tags parsed from the OpenAPI file
 
+Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
+
 {% endcomment %}
 
 {% comment %} Include imports if not writing to an existing urls.py file. {% endcomment %}
 {% if not urls_exists %}
 from django.contrib import admin
 from django.urls import path
+
+urlpatterns = []
 {% endif %}
 {% endspaceless %}
 
 ### OpenAPI to Django Endpoints ###
-{% for tag in tags %}
-## {{ tag }} Endpoints ##
-{% endfor %}
+
+openapi_endpoints = [{% for url in urls %}
+    path({{ url.path }}, {{ url.path }}),{% endfor %}
+]
+
+urlpatterns.append(openapi_endpoints)
