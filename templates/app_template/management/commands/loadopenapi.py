@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import yaml
 from django.core.management.base import BaseCommand, CommandError
 from django.template import Context, Engine
@@ -24,6 +25,7 @@ class Url:
     """Stores URL data in a structured way."""
 
     path: str
+    view: str  # name of the URL's function in views.py
 
 
 class Command(BaseCommand):
@@ -181,6 +183,26 @@ class Command(BaseCommand):
         urls = []
 
         for path_name, path_content in openapi["paths"].items():
-            urls.append(Url(path_name))
+            # splits a path by "/" to get tokens
+            # e.g. gets ["example", "{id}"] from "/example/{id}"
+            split_slash = re.compile("(?<=\/)([^\/]+)")
+            tokens = split_slash.findall(path_name)
+            view_tokens = tokens.copy()
+
+            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
+
+            for i in range(0, len(tokens)):
+                # attempts to extract parameter name from the braces
+                # e.g. gets ["id"] from "{id}"
+                parameter_name = extract_parameter.findall(tokens[i])
+
+                # changes the view token to the parameter name (no braces)
+                if len(parameter_name) == 1:
+                    view_tokens[i] = parameter_name[0]
+
+            # join each token with "_" to make the views.py function name
+            view_name = "_".join(view_tokens)
+
+            urls.append(Url(path_name, view_name))
 
         return urls
