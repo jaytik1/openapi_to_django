@@ -22,8 +22,8 @@ urlpatterns = []
 
 # # # OpenAPI to Django Endpoints # # #
 
-openapi_endpoints = [{% for url in urls %}
-    path('{{ url.path }}', {{ url.view }}),{% endfor %}
+openapi_endpoints = [{% for path in paths %}
+    path('{{ path.url }}', {{ path.view }}),{% endfor %}
 ]
 
 urlpatterns.append(openapi_endpoints)

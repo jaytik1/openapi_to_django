@@ -12,9 +12,9 @@ from typing import Any, Mapping, Self
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
-# maps the OpenAPI parameter types to Django parameter types
-OPENAPI_DJANGO_PATH_MAP = {"number": "int", "integer": "int", "string": "str"}
-DEFAULT_DJANGO_PATH_TYPE = "str"
+# maps the OpenAPI path parameter types to Django path parameter types
+OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
+DEFAULT_DJANGO_TYPE = "str"
 
 
 class FileType(Enum):
@@ -23,11 +23,11 @@ class FileType(Enum):
 
 
 @dataclass
-class Url:
-    """Stores URL data in a structured way."""
+class DjangoPath:
+    """Stores the data required to create a Django path."""
 
-    path: str
-    view: str  # name of the URL's function in views.py
+    url: str
+    view: str  # name of the path's function in views.py
 
 
 class Command(BaseCommand):
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--urls-target",
-            help="urls.py file where the rendered URLs should be written",
+            help="file where the generated Django URLs should be written",
             default="urls.py",
         )
 
@@ -91,11 +91,13 @@ class Command(BaseCommand):
             elif openapi_file_extension in YAML_EXTENSIONS:
                 openapi_filetype = FileType.YAML
 
-        # parse the file according to the determined file type
+        # attempt to parse the file according to the determined file type
         if openapi_filetype == FileType.JSON:
-            openapi = self.parse_json(openapi_path)
+            with open(openapi_path, "r") as json_file:
+                openapi = json.load(json_file)
         elif openapi_filetype == FileType.YAML:
-            openapi = self.parse_yaml(openapi_path)
+            with open(openapi_path, "r") as yaml_file:
+                openapi = yaml.safe_load(yaml_file)
         else:
             raise CommandError(
                 "OpenAPI file type not determined, use -j or -y to parse as JSON or YAML"
@@ -121,11 +123,11 @@ class Command(BaseCommand):
         # convert the urls.py template file content to a renderable Template object
         urls_template = Engine().from_string(urls_template_string)
 
-        # convert OpenAPI URLs to Django URLs
-        urls = self.openapi_to_django_urls(openapi)
+        # convert OpenAPI paths to Django paths
+        paths = self.openapi_to_django_paths(openapi)
 
         context = Context(
-            {"urls": urls, "urls_exists": urls_exists},
+            {"paths": paths, "urls_exists": urls_exists},
             autoescape=False,
         )
         rendered_urls = urls_template.render(context)
@@ -133,61 +135,29 @@ class Command(BaseCommand):
         with open(urls_target_path, "a", encoding="utf-8") as urls_file:
             urls_file.write(rendered_urls)
 
-        print("Loaded URLs.")
+        print(f"Loaded OpenAPI paths to {urls_target_path}.")
 
-    def parse_json(self: Self, filepath: str) -> Mapping[str, Any] | list[Any]:
-        """Parse a JSON file into a Python dictionary or list.
-
-        Args:
-            filepath: Path of the JSON file to be parsed.
-
-        Returns:
-            Python dictionary or list representing the JSON file.
-        """
-        with open(filepath, "r") as json_file:
-            try:
-                return json.load(json_file)
-            except json.JSONDecodeError as e:
-                print(f"error: problem when reading JSON file: {e}")
-            except UnicodeDecodeError as e:
-                print(f"error: problem when reading JSON file: {e}")
-
-    def parse_yaml(self: Self, filepath: str) -> Mapping[str, Any] | list[Any]:
-        """Parse a YAML file into a Python dictionary or list.
-
-        Args:
-            filepath: Path of the YAML file to be parsed.
-
-        Returns:
-            Python dictionary or list representing the YAML file.
-        """
-        with open(filepath, "r") as yaml_file:
-            try:
-                return yaml.safe_load(yaml_file)
-            except yaml.YAMLError as e:
-                print(f"error: problem when reading YAML file: {e}")
-
-    def openapi_to_django_urls(
+    def openapi_to_django_paths(
         self: Self, openapi: Mapping[str, Any] | list[Any]
-    ) -> list[Url]:
-        """Converts each URL present in an OpenAPI document into the Django URL format.
+    ) -> list[DjangoPath]:
+        """Converts each path present in an OpenAPI document into the Django path format.
 
         Args:
             openapi: Python representation of an OpenAPI document.
 
         Returns:
-            A list of Url dataclass objects to be passed to the template.
+            A list of DjangoPath dataclass objects to be passed to the template.
 
         Raises:
             Exception: Path parameter couldn't be generated.
         """
 
-        urls = []
+        paths = []
 
         for path_name, path_content in openapi["paths"].items():
-            # gets all path parameters defined in the OpenAPI endpoint
+            # gets all path parameters defined in the OpenAPI path object
             try:
-                endpoint_params = self.get_endpoint_path_params(path_content)
+                path_params = self.get_openapi_path_params(path_content)
             except Exception as exc:
                 print(f"Couldn't get path parameters for path {path_name}: {exc}")
                 continue
@@ -197,10 +167,10 @@ class Command(BaseCommand):
             split_slash = re.compile("(?<=\/)([^\/]+)")
             tokens = split_slash.findall(path_name)
 
-            # attempt to convert path params to the Django format
+            # attempt to convert parameters in the OpenAPI URL to the Django format
             try:
-                path_tokens = [
-                    self.openapi_to_django_path_param(token, endpoint_params)
+                url_tokens = [
+                    self.openapi_to_django_path_param(token, path_params)
                     for token in tokens
                 ]
             except Exception as exc:
@@ -210,13 +180,13 @@ class Command(BaseCommand):
             # remove braces from token to generate view name
             view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
 
-            path = "/".join(path_tokens)  # generate the Django path URL
+            url = "/".join(url_tokens)  # generate the Django path URL
             view = "_".join(view_tokens)  # generate the views.py function name
-            urls.append(Url(path, view))
+            paths.append(DjangoPath(url, view))
 
-        return urls
+        return paths
 
-    def get_endpoint_path_params(
+    def get_openapi_path_params(
         self: Self, endpoint: Mapping[str, Any]
     ) -> Mapping[str, str]:
         """Get all path parameters contained in an OpenAPI endpoint.
@@ -251,7 +221,8 @@ class Command(BaseCommand):
     ) -> None:
         """
         Parse a list of OpenAPI parameter obejcts to get their names and types.
-        Catch any conflicting parameters (same name but different type).
+        Raise for any conflicting parameters (same name but different type).
+        Ignores any parameters which aren't path parameters.
 
         Args:
             params_list: List of OpenAPI parameter objects.
@@ -308,9 +279,9 @@ class Command(BaseCommand):
         param_type = current_params[param_name]
 
         # convert the OpenAPI type to a Django type
-        if param_type in OPENAPI_DJANGO_PATH_MAP:
-            param_type = OPENAPI_DJANGO_PATH_MAP[param_type]
+        if param_type in OPENAPI_DJANGO_TYPE_MAP:
+            param_type = OPENAPI_DJANGO_TYPE_MAP[param_type]
         else:
-            param_type = DEFAULT_DJANGO_PATH_TYPE
+            param_type = DEFAULT_DJANGO_TYPE
 
         return f"<{param_type}:{param_name}>"
