@@ -149,6 +149,8 @@ class Command(BaseCommand):
         with open(urls_target_path, "a", encoding="utf-8") as urls_file:
             urls_file.write(rendered_urls)
 
+        print(f"Loaded OpenAPI paths to {urls_target_path}.")
+
         # render Django views.py file
 
         views_template_argument = options.pop("views_template")
@@ -175,7 +177,7 @@ class Command(BaseCommand):
         # TODO
 
         views_context = Context(
-            {"views_exists": views_exists},
+            {"paths": paths, "views_exists": views_exists},
             autoescape=False,
         )
         rendered_views = views_template.render(views_context)
