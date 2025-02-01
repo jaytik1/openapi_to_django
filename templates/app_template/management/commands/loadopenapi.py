@@ -54,7 +54,7 @@ class Command(BaseCommand):
             action="store_true",
         )
 
-        # arguments for writing urls.py entries
+        # arguments for rendering the Django urls.py file
         parser.add_argument(
             "--urls-template",
             help="template file for rendering OpenAPI endpoints in urls.py",
@@ -64,6 +64,18 @@ class Command(BaseCommand):
             "--urls-target",
             help="file where the generated Django URLs should be written",
             default="urls.py",
+        )
+
+        # arguments for rendering the Django views.py file
+        parser.add_argument(
+            "--views-template",
+            help="template file for rendering functions in views.py",
+            default=os.path.join("..", "templates", "views.py-tpl"),
+        )
+        parser.add_argument(
+            "--views-target",
+            help="file where the generated Django view functions should be written",
+            default=os.path.join("views.py"),
         )
 
     def handle(self, **options):
@@ -103,6 +115,8 @@ class Command(BaseCommand):
                 "OpenAPI file type not determined, use -j or -y to parse as JSON or YAML"
             )
 
+        # render Django urls.py file
+
         urls_template_argument = options.pop("urls_template")
         urls_template_path = os.path.abspath(urls_template_argument)
 
@@ -126,16 +140,50 @@ class Command(BaseCommand):
         # convert OpenAPI paths to Django paths
         paths = self.openapi_to_django_paths(openapi)
 
-        context = Context(
+        urls_context = Context(
             {"paths": paths, "urls_exists": urls_exists},
             autoescape=False,
         )
-        rendered_urls = urls_template.render(context)
+        rendered_urls = urls_template.render(urls_context)
 
         with open(urls_target_path, "a", encoding="utf-8") as urls_file:
             urls_file.write(rendered_urls)
 
-        print(f"Loaded OpenAPI paths to {urls_target_path}.")
+        # render Django views.py file
+
+        views_template_argument = options.pop("views_template")
+        views_template_path = os.path.abspath(views_template_argument)
+
+        if not os.path.exists(views_template_path):
+            raise CommandError(
+                f"views.py template file {views_template_path} does not exist"
+            )
+
+        views_target_argument = options.pop("views_target")
+        views_target_path = os.path.abspath(views_target_argument)
+
+        # target views.py file doesn't need to exist already, can write to a new one
+        views_exists = os.path.exists(views_target_path)
+
+        with open(views_template_path, "r", encoding="utf-8") as views_template_file:
+            views_template_string = views_template_file.read()
+
+        # convert the views.py template file content to a renderable Template object
+        views_template = Engine().from_string(views_template_string)
+
+        # generate Django view functions from the OpenAPI document
+        # TODO
+
+        views_context = Context(
+            {"views_exists": views_exists},
+            autoescape=False,
+        )
+        rendered_views = views_template.render(views_context)
+
+        with open(views_target_path, "a", encoding="utf-8") as views_file:
+            views_file.write(rendered_views)
+
+        print(f"Wrote generated view functions to {views_target_path}.")
 
     def openapi_to_django_paths(
         self: Self, openapi: Mapping[str, Any] | list[Any]
