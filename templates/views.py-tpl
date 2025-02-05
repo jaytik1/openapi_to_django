@@ -8,6 +8,7 @@ Context Variables:
 - paths: a list of objects containing Django path details, with each path object containing the following
   - url: the URL for the endpoint (includes path parameters in the format <type:name>)
   - view: the name of the corresponding views.py function for that path
+  - params: dictionary of path parameter names mapped to their types
 
 Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
 
@@ -21,7 +22,6 @@ from django.http import HttpResponse
 
 # # # OpenAPI to Django Views # # #
 {% for path in paths %}
-
-def {{ path.view }}():
+def {{ path.view }}({% for name, type in path.params.items %}{{ name }}: {{ type }}{% endfor %}):
     return HttpResponse(status=200)
 {% endfor %}

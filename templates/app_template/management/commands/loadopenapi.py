@@ -26,8 +26,9 @@ class FileType(Enum):
 class DjangoPath:
     """Stores the data required to create a Django path."""
 
-    url: str
+    url: str  # URL of the path, including any path parameters
     view: str  # name of the path's function in views.py
+    params: Mapping[str, str]  # list of path parameters and their types
 
 
 class Command(BaseCommand):
@@ -207,10 +208,16 @@ class Command(BaseCommand):
         for path_name, path_content in openapi["paths"].items():
             # gets all path parameters defined in the OpenAPI path object
             try:
-                path_params = self.get_openapi_path_params(path_content)
+                openapi_path_params = self.get_openapi_path_params(path_content)
             except Exception as exc:
                 print(f"Couldn't get path parameters for path {path_name}: {exc}")
                 continue
+
+            # convert each of the parameter types from OpenAPI to Django
+            django_path_params = {
+                param_name: self.openapi_to_django_type(param_type)
+                for (param_name, param_type) in openapi_path_params.items()
+            }
 
             # splits a path by "/" to get tokens
             # e.g. gets ["example", "{id}"] from "/example/{id}"
@@ -220,7 +227,7 @@ class Command(BaseCommand):
             # attempt to convert parameters in the OpenAPI URL to the Django format
             try:
                 url_tokens = [
-                    self.openapi_to_django_path_param(token, path_params)
+                    self.openapi_to_django_path_param(token, django_path_params)
                     for token in tokens
                 ]
             except Exception as exc:
@@ -232,7 +239,7 @@ class Command(BaseCommand):
 
             url = "/".join(url_tokens)  # generate the Django path URL
             view = "_".join(view_tokens)  # generate the views.py function name
-            paths.append(DjangoPath(url, view))
+            paths.append(DjangoPath(url, view, django_path_params))
 
         return paths
 
@@ -328,10 +335,19 @@ class Command(BaseCommand):
 
         param_type = current_params[param_name]
 
-        # convert the OpenAPI type to a Django type
-        if param_type in OPENAPI_DJANGO_TYPE_MAP:
-            param_type = OPENAPI_DJANGO_TYPE_MAP[param_type]
-        else:
-            param_type = DEFAULT_DJANGO_TYPE
-
         return f"<{param_type}:{param_name}>"
+
+    def openapi_to_django_type(self: Self, param_type: str) -> str:
+        """Convert an OpenAPI type to its equivalent Django type.
+
+        Args:
+            param_type: Name of the OpenAPI type to be converted.
+
+        Returns:
+            Name of the equivalent Django type, or a default type if not found.
+        """
+        return (
+            OPENAPI_DJANGO_TYPE_MAP[param_type]
+            if param_type in OPENAPI_DJANGO_TYPE_MAP
+            else DEFAULT_DJANGO_TYPE
+        )
