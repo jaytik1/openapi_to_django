@@ -13,20 +13,16 @@ Context Variables:
 
 Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
 
-{% endcomment %}
-
-{% comment %} Include imports if not writing to an existing urls.py file. {% endcomment %}
+{% endcomment %}{% if not urls_exists %}from django.urls import path{% endif %}{% endspaceless %}
+{{ views_import }}
 {% if not urls_exists %}
-from django.urls import path
 
-urlpatterns = []
-{% endif %}
-{% endspaceless %}
+urlpatterns = []{% endif %}
 
 # # # OpenAPI to Django Endpoints # # #
 
 openapi_endpoints = [{% for path in paths %}
-    path('{{ path.url }}', {{ path.view }}),{% endfor %}
+    path('{{ path.url }}', {{ views_name }}.{{ path.view }}),{% endfor %}
 ]
 
 urlpatterns.append(openapi_endpoints)

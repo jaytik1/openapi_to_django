@@ -59,7 +59,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--urls-template",
             help="template file for rendering OpenAPI endpoints in urls.py",
-            default=str(Path.cwd().parent / "templates" / "urls.py-tpl"),
+            # TODO remove, temporary to make development easier
+            default=str(Path(__file__).parents[4] / "templates" / "urls.py-tpl"),
         )
         parser.add_argument(
             "--urls-target",
@@ -71,7 +72,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--views-template",
             help="template file for rendering functions in views.py",
-            default=str(Path.cwd().parent / "templates" / "views.py-tpl"),
+            # TODO remove, temporary to make development easier
+            default=str(Path(__file__).parents[4] / "templates" / "views.py-tpl"),
         )
         parser.add_argument(
             "--views-target",
@@ -139,8 +141,15 @@ class Command(BaseCommand):
         # convert the urls.py template file content to a renderable Template object
         urls_template = Engine().from_string(urls_template_string)
 
+        views_import = self.generate_views_import(urls_target_path, views_target_path)
+
         urls_context = Context(
-            {"paths": paths, "urls_exists": urls_target_path.is_file()},
+            {
+                "paths": paths,
+                "urls_exists": urls_target_path.is_file(),
+                "views_name": views_target_path.stem,
+                "views_import": views_import,
+            },
             autoescape=False,
         )
         rendered_urls = urls_template.render(urls_context)
@@ -335,3 +344,47 @@ class Command(BaseCommand):
             if param_type in OPENAPI_DJANGO_TYPE_MAP
             else DEFAULT_DJANGO_TYPE
         )
+
+    def generate_views_import(self: Self, urls_path: Path, views_path) -> str:
+        """Generate the views file import statement so it can be used by the URLs file.
+
+        Args:
+            urls_path: Path object for the URLs file.
+            views_path: Path object for the views file.
+
+        Returns:
+            Import statement for the views file relative to the URLs file.
+        """
+        urls_parts = urls_path.resolve().absolute().parts
+        views_parts = views_path.resolve().absolute().parts
+
+        # traverse past the common directories for both paths
+        index = 0
+        while urls_parts[index] == views_parts[index]:
+            index += 1
+
+        print(urls_parts[index:])
+        print(views_parts[index:])
+
+        if len(urls_parts[index:]) == len(views_parts[index:]):
+            # urls and views are in the same directory
+            import_statement = f"import {views_path.stem}"
+        if len(urls_parts[index:]) < len(views_parts[index:]):
+            # views is in a child directory of the urls file's directory
+            import_statement = (
+                f"from {'.'.join(views_parts[index:-1])} import {views_path.stem}"
+            )
+        elif len(urls_parts[index:]) > len(views_parts[index:]):
+            # urls is in a child directory of the views file's directory
+            num_parents = len(urls_parts[index:]) - len(views_parts[index:])
+
+            import_statement = "import sys\n"
+            import_statement += "from pathlib import Path\n"
+            import_statement += "# TODO (OpenAPI to Django) consider moving views.py out of parent directory\n"
+            # add the views directory to the module path so it can be imported
+            import_statement += (
+                f"sys.path.insert(0, Path(__file__).parents[{num_parents}])\n"
+            )
+            import_statement += f"import {views_path.stem}"
+
+        return import_statement
