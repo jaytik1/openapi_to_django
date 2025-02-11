@@ -82,24 +82,31 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        openapi_path = Path(options.pop("openapi-file"))
+        openapi_path = Path(options.pop("openapi-file")).resolve()
         if not openapi_path.is_file():
             raise CommandError(f"OpenAPI file {openapi_path} does not exist")
 
-        urls_template_path = Path(options.pop("urls_template"))
+        urls_template_path = Path(options.pop("urls_template")).resolve()
         if not urls_template_path.is_file():
             raise CommandError(
                 f"urls.py template file {urls_template_path} does not exist"
             )
 
-        views_template_path = Path(options.pop("views_template"))
+        views_template_path = Path(options.pop("views_template")).resolve()
         if not views_template_path.is_file():
             raise CommandError(
                 f"views.py template file {views_template_path} does not exist"
             )
 
-        urls_target_path = Path(options.pop("urls_target"))
-        views_target_path = Path(options.pop("views_target"))
+        urls_target_path = Path(options.pop("urls_target")).resolve()
+        if not urls_target_path.parent.is_dir():
+            # create directory for the URLs target if it doesn't exist
+            urls_target_path.parent.mkdir(parents=True)
+
+        views_target_path = Path(options.pop("views_target")).resolve()
+        if not views_target_path.parent.is_dir():
+            # create directory for the views target if it doesn't exist
+            views_target_path.parent.mkdir(parents=True)
 
         openapi_filetype: FileType | None = None
 
@@ -355,8 +362,8 @@ class Command(BaseCommand):
         Returns:
             Import statement for the views file relative to the URLs file.
         """
-        urls_parts = urls_path.resolve().absolute().parts
-        views_parts = views_path.resolve().absolute().parts
+        urls_parts = urls_path.parts
+        views_parts = views_path.parts
 
         # traverse past the common directories for both paths
         index = 0
