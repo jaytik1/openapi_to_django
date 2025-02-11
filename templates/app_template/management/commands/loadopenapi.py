@@ -23,12 +23,12 @@ class DjangoPath:
     """Stores the data required to create a Django path."""
 
     url: str  # URL of the path, including any path parameters
-    view: str  # name of the path's function in views.py
+    view: str  # name of the path's corresponding function in views.py
     params: Mapping[str, str]  # list of path parameters and their types
 
 
 class Command(BaseCommand):
-    help = "Load a specified OpenAPI document"
+    help = "Generate Django code by loading a specified OpenAPI document"
 
     def add_arguments(self, parser):
         parser.add_argument("openapi-file", help="OpenAPI file")
@@ -55,8 +55,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--urls-template",
             help="template file for rendering OpenAPI endpoints in urls.py",
-            # TODO remove, temporary to make development easier
-            default=str(Path(__file__).parents[4] / "templates" / "urls.py-tpl"),
+            required=True,
         )
         parser.add_argument(
             "--urls-target",
@@ -68,8 +67,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--views-template",
             help="template file for rendering functions in views.py",
-            # TODO remove, temporary to make development easier
-            default=str(Path(__file__).parents[4] / "templates" / "views.py-tpl"),
+            required=True,
         )
         parser.add_argument(
             "--views-target",
