@@ -12,10 +12,6 @@ from typing import Any, Mapping, Self
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
-# maps the OpenAPI path parameter types to Django path parameter types
-OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
-DEFAULT_DJANGO_TYPE = "str"
-
 
 class FileType(Enum):
     JSON = "json"
@@ -346,6 +342,12 @@ class Command(BaseCommand):
         Returns:
             Name of the equivalent Django type, or a default type if not found.
         """
+        # maps the OpenAPI path parameter types to Django path parameter types
+        OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
+
+        # sets a default value for the type, used if it isn't recognised
+        DEFAULT_DJANGO_TYPE = "str"
+
         return (
             OPENAPI_DJANGO_TYPE_MAP[param_type]
             if param_type in OPENAPI_DJANGO_TYPE_MAP
