@@ -390,7 +390,7 @@ class Command(BaseCommand):
             import_statement += "# TODO (OpenAPI to Django) consider moving views.py out of parent directory\n"
             # add the views directory to the module path so it can be imported
             import_statement += (
-                f"sys.path.insert(0, Path(__file__).parents[{num_parents}])\n"
+                f"sys.path.insert(0, str(Path(__file__).parents[{num_parents}]))\n"
             )
             import_statement += f"import {views_path.stem}"
 
