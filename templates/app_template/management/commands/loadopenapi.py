@@ -353,7 +353,7 @@ class Command(BaseCommand):
         )
 
     def generate_views_import(self: Self, urls_path: Path, views_path) -> str:
-        """Generate the views file import statement so it can be used by the URLs file.
+        """Generate an import statement for the views file, to be used in the URLs file.
 
         Args:
             urls_path: Path object for the URLs file.
@@ -365,25 +365,26 @@ class Command(BaseCommand):
         urls_parts = urls_path.parts
         views_parts = views_path.parts
 
-        # traverse past the common directories for both paths
-        index = 0
-        while urls_parts[index] == views_parts[index]:
-            index += 1
+        # discard the common parent directories for both paths
+        while (
+            len(urls_parts) > 0
+            and len(views_parts) > 0
+            and urls_parts[0] == views_parts[0]
+        ):
+            urls_parts.pop(0)
+            views_parts.pop(0)
 
-        print(urls_parts[index:])
-        print(views_parts[index:])
-
-        if len(urls_parts[index:]) == len(views_parts[index:]):
+        if len(urls_parts) == len(views_parts):
             # urls and views are in the same directory
             import_statement = f"import {views_path.stem}"
-        if len(urls_parts[index:]) < len(views_parts[index:]):
+        if len(urls_parts) < len(views_parts):
             # views is in a child directory of the urls file's directory
             import_statement = (
-                f"from {'.'.join(views_parts[index:-1])} import {views_path.stem}"
+                f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
             )
-        elif len(urls_parts[index:]) > len(views_parts[index:]):
+        elif len(urls_parts) > len(views_parts):
             # urls is in a child directory of the views file's directory
-            num_parents = len(urls_parts[index:]) - len(views_parts[index:])
+            num_parents = len(urls_parts) - len(views_parts)
 
             import_statement = "import sys\n"
             import_statement += "from pathlib import Path\n"
