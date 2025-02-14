@@ -208,34 +208,76 @@ class Command(BaseCommand):
                 continue
 
             # convert each of the parameter types from OpenAPI to Django
+            # store as a mapping from param name to param type
             django_path_params = {
                 param_name: self.openapi_to_django_type(param_type)
                 for (param_name, param_type) in openapi_path_params.items()
             }
 
-            # splits a path by "/" to get tokens
-            # e.g. gets ["example", "{id}"] from "/example/{id}"
-            split_slash = re.compile("(?<=\/)([^\/]+)")
-            tokens = split_slash.findall(path_name)
-
-            # attempt to convert parameters in the OpenAPI URL to the Django format
+            # gets a mapping of a Django URL to a Django view name
             try:
-                url_tokens = [
-                    self.openapi_to_django_path_param(token, django_path_params)
-                    for token in tokens
-                ]
+                url_to_view = self.get_url_to_view(path_name, django_path_params)
             except Exception as exc:
-                print(f"Couldn't generate Django path param: {exc}")
+                print(f"Couldn't generate Django URL: {exc}")
                 continue
 
-            # remove braces from token to generate view name
-            view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
+            # TODO remove later, temporary workaround
+            url = list(url_to_view.keys())[0]
+            view = list(url_to_view.values())[0]
 
-            url = "/".join(url_tokens)  # generate the Django path URL
-            view = "_".join(view_tokens)  # generate the views.py function name
             paths.append(DjangoPath(url, view, django_path_params))
 
         return paths
+
+    def get_url_to_view(
+        self: Self, path_name: str, current_params: Mapping[str, str]
+    ) -> Mapping[str, str]:
+        """Generate a Django URL and view from an OpenAPI path name.
+
+        Args:
+            self: _description_
+            path_name: OpenAPI path name
+            current_params: Path paremeters associated with this OpenAPI path.
+
+        Raises:
+            Exception: Path parameter in the path couldn't be found.
+
+        Returns:
+            Mapping of a Django URL to a Django view function.
+        """
+        # splits a path by "/" to get tokens
+        # e.g. gets ["example", "{id}"] from "/example/{id}"
+        split_slash = re.compile("(?<=\/)([^\/]+)")
+        tokens = split_slash.findall(path_name)
+
+        url_tokens = []
+
+        for token in tokens:
+            # get the parameter name inside the braces
+            # e.g. gets "id" from "{id}"
+            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
+            parameter_list = extract_parameter.findall(token)
+
+            # continue if the current token isn't a path parameter
+            if len(parameter_list) != 1:
+                url_tokens.append(token)
+                continue
+
+            param_name = parameter_list[0]
+
+            if param_name not in current_params:
+                raise Exception(f"Parameter name {param_name} not defined!")
+
+            param_type = current_params[param_name]
+            url_tokens.append(f"<{param_type}:{param_name}>")
+
+        # remove braces from the path name to generate view name
+        view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
+
+        url = "/".join(url_tokens)  # generate the Django path URL
+        view = "_".join(view_tokens)  # generate the views.py function name
+
+        return {url: view}
 
     def get_openapi_path_params(
         self: Self, endpoint: Mapping[str, Any]
@@ -294,42 +336,6 @@ class Command(BaseCommand):
                 current_params[param_name] = param_type
             elif current_params[param_name] != param_type:
                 raise Exception(f"Conflicting parameter type: {param_name}")
-
-    def openapi_to_django_path_param(
-        self: Self, token: str, current_params: Mapping[str, str]
-    ):
-        """
-        Convert an OpenAPI path parameter to a Django path parameter.
-        For example, converts "{id}" to "<int:id>".
-
-        Args:
-            token: OpenAPI path parameter or other path token.
-            current_params: List of path parameter definitions from the OpenAPI document.
-
-        Raises:
-            Exception: A path parameter type isn't defined in the OpenAPI document.
-
-        Returns:
-            Parameter in the Django path parameter URL format,
-            or the given token if it isn't a path parameter.
-        """
-        # attempts to extract parameter name from the token
-        # e.g. gets ["id"] from "{id}"
-        extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
-        parameter_list = extract_parameter.findall(token)
-
-        # return if the current token isn't a path parameter
-        if len(parameter_list) != 1:
-            return token
-
-        param_name = parameter_list[0]
-
-        if param_name not in current_params:
-            raise Exception(f"Parameter name {param_name} not defined!")
-
-        param_type = current_params[param_name]
-
-        return f"<{param_type}:{param_name}>"
 
     def openapi_to_django_type(self: Self, param_type: str) -> str:
         """Convert an OpenAPI type to its equivalent Django type.
