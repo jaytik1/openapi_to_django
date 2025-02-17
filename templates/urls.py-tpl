@@ -6,10 +6,9 @@ Specify how the endpoints parsed from the OpenAPI document should be added to Dj
 
 Context Variables:
 - urls_exists: determines whether writing to an existing urls.py file, to decide if imports and initial variables need to be written
-- paths: a list of objects containing Django path details, with each path object containing the following
-  - url: the URL for the endpoint (includes path parameters in the format <type:name>)
-  - view: the name of the corresponding views.py function for that path
-  - params: dictionary of path parameter names mapped to their types
+- paths: a list of DjangoPath dataclass objects to generate each path
+  - url: the URL for the endpoint (includes path parameters in the format "<type:name>")
+  - view_name: the name of the corresponding views.py function for that path
 
 Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
 
@@ -22,7 +21,7 @@ urlpatterns = []{% endif %}
 # # # OpenAPI to Django Endpoints # # #
 
 openapi_endpoints = [{% for path in paths %}
-    path('{{ path.url }}', {{ views_name }}.{{ path.view }}),{% endfor %}
+    path('{{ path.url }}', {{ views_name }}.{{ path.view_name }}),{% endfor %}
 ]
 
 urlpatterns.append(openapi_endpoints)

@@ -5,10 +5,9 @@ Template file for rendering views.py functions for each OpenAPI endpoint.
 
 Context Variables:
 - views_exists: determines whether writing to an existing views.py file, to decide if imports and initial variables need to be written
-- paths: a list of objects containing Django path details, with each path object containing the following
-  - url: the URL for the endpoint (includes path parameters in the format <type:name>)
-  - view: the name of the corresponding views.py function for that path
-  - params: dictionary of path parameter names mapped to their types
+- views: a list of DjangoView dataclass objects to generate each function
+  - view_name: name of the view function
+  - params: dictionary of view function parameters mapped to their types
 
 Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
 
@@ -21,7 +20,8 @@ from django.http import HttpResponse
 {% endspaceless %}
 
 # # # OpenAPI to Django Views # # #
-{% for path in paths %}
-def {{ path.view }}({% for name, type in path.params.items %}{{ name }}: {{ type }}{% endfor %}):
+{% for view in views %}
+
+def {{ view.view_name }}({% for name, type in view.params.items %}{{ name }}: {{ type }}{% endfor %}):
     return HttpResponse(status=200)
 {% endfor %}
