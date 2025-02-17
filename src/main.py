@@ -4,7 +4,7 @@ import json
 import os
 import yaml
 from enum import Enum
-from pathlib import OpenApiPath
+from pathlib import Path
 from typing import Any, Mapping
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -192,7 +192,7 @@ def write_json(
         OSError: Attempted to overwrite an existing file.
         TypeError: Given data is not JSON serialisable.
     """
-    filepath_object = OpenApiPath(filepath)
+    filepath_object = Path(filepath)
 
     if filepath_object.exists():
         raise OSError(f"File already exists at given filepath: {filepath}.")
@@ -238,7 +238,7 @@ def write_yaml(
     Raises:
         OSError: Attempted to overwrite an existing file.
     """
-    filepath_object = OpenApiPath(filepath)
+    filepath_object = Path(filepath)
 
     if filepath_object.exists():
         raise OSError(f"File already exists at given filepath: {filepath}.")
