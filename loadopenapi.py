@@ -1,1 +1,0 @@
-templates/app_template/management/commands/loadopenapi.py
