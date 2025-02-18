@@ -77,13 +77,6 @@ def main():
         views_target=app_directory / "views.py",
     )
 
-    # TODO experiment with this, see if passing file_type as None ignores in the loadopenapi!
-    # if args.file_type:
-    #     # call with the file type if specified
-    #     pass
-    # else:
-    #     call_command()
-
     print("OpenAPI to Django setup complete.")
 
 
