@@ -23,7 +23,7 @@ class PathData:
     """Data about an OpenAPI path."""
 
     openapi_path: str  # path URL as stored in the OpenAPI document
-    path_params: Mapping[str, str]  # list of path parameters and their Django types
+    path_params: Mapping[str, str]  # dict of path parameters and their Django types
 
 
 @dataclass
@@ -39,7 +39,7 @@ class DjangoView:
     """Data required to create a Django view function in views.py."""
 
     view_name: str  # name of the function in views.py
-    params: Mapping[str, str]  # list of view parameters and their types
+    params: Mapping[str, str]  # dict of view parameters and their types
 
 
 class Command(BaseCommand):
@@ -49,37 +49,26 @@ class Command(BaseCommand):
         """Add command line arguments for the command.
 
         Args:
-            parser: Command line argument parser, where the arguments are stored.
+            parser: Command line argument parser where the arguments are stored.
         """
-        parser.add_argument("openapi-file", help="OpenAPI file")
-
-        # arguments for specifying the OpenAPI document file type
-        group_filetype = parser.add_argument_group(
-            "specify filetype", "Specify the filetype of the given file."
-        )
-        exclusive_group_filetype = group_filetype.add_mutually_exclusive_group()
-        exclusive_group_filetype.add_argument(
-            "-j",
-            "--parse-json",
-            help="specify that the given file should be parsed as JSON",
-            action="store_true",
-        )
-        exclusive_group_filetype.add_argument(
-            "-y",
-            "--parse-yaml",
-            help="specify that the given file should be parsed as YAML",
-            action="store_true",
+        parser.add_argument("openapi_file", help="file path of the OpenAPI document")
+        parser.add_argument(
+            "-t",
+            "--file-type",
+            help="file type of the OpenAPI document",
+            choices=[FileType.JSON.value, FileType.YAML.value],
+            required=False,
         )
 
         # arguments for rendering the Django urls.py file
         parser.add_argument(
             "--urls-template",
-            help="template file for rendering OpenAPI paths in urls.py",
+            help="template file for rendering Django paths in urls.py",
             required=True,
         )
         parser.add_argument(
             "--urls-target",
-            help="file where the generated Django URLs should be written",
+            help="file where the generated Django URL paths should be written",
             default="urls.py",
         )
 
@@ -96,13 +85,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        """Handle the command when it is run.
+        """Handle the loadopenapi command when it is run.
         Validate command line arguments, then run the necessary functions.
 
         Raises:
             CommandError: Something went wrong when running the command.
         """
-        openapi_path = Path(options.pop("openapi-file")).resolve()
+        openapi_path = Path(options.pop("openapi_file")).resolve()
         if not openapi_path.is_file():
             raise CommandError(f"OpenAPI file {openapi_path} does not exist")
 
@@ -128,33 +117,29 @@ class Command(BaseCommand):
             # create directory for the views target if it doesn't exist
             views_target_path.parent.mkdir(parents=True)
 
-        openapi_filetype: FileType | None = None
+        # determine the file type of the OpenAPI document
+        file_type = options.pop("file_type")
 
-        parse_json = options.pop("parse_json")
-        parse_yaml = options.pop("parse_yaml")
-
-        # checks if the file type has been explicitly specified first
-        if parse_json:
-            openapi_filetype = FileType.JSON
-        elif parse_yaml:
-            openapi_filetype = FileType.YAML
+        if file_type:
+            # set file type to the manually specified one if given
+            openapi_file_type = FileType[file_type]
         else:
             # attempts to identify a file type from the file extension
             if openapi_path.suffix in JSON_EXTENSIONS:
-                openapi_filetype = FileType.JSON
+                openapi_file_type = FileType.JSON
             elif openapi_path.suffix in YAML_EXTENSIONS:
-                openapi_filetype = FileType.YAML
+                openapi_file_type = FileType.YAML
 
         # attempt to parse the file according to the determined file type
-        if openapi_filetype == FileType.JSON:
+        if openapi_file_type == FileType.JSON:
             with open(openapi_path, "r") as json_file:
                 openapi = json.load(json_file)
-        elif openapi_filetype == FileType.YAML:
+        elif openapi_file_type == FileType.YAML:
             with open(openapi_path, "r") as yaml_file:
                 openapi = yaml.safe_load(yaml_file)
         else:
             raise CommandError(
-                "OpenAPI file type not determined, use -j or -y to parse as JSON or YAML"
+                "OpenAPI file type not determined, use --file-type to specify"
             )
 
         paths_data = self.get_paths_data(openapi)
@@ -163,6 +148,41 @@ class Command(BaseCommand):
             paths_data, urls_target_path, urls_template_path, views_target_path
         )
         self.write_views_file(paths_data, views_target_path, views_template_path)
+
+    def get_paths_data(
+        self: Self, openapi: Mapping[str, Any] | list[Any]
+    ) -> list[PathData]:
+        """Gets required data for all paths in an OpenAPI document.
+
+        Args:
+            openapi: Python representation of an OpenAPI document.
+
+        Returns:
+            List of PathData objects gathered from the OpenAPI document.
+        """
+        paths_data = []
+
+        for path_name, path_content in openapi["paths"].items():
+            path_params = {}
+
+            # get path parameters from the path object
+            if "parameters" in path_content:
+                self.parse_path_params(path_content["parameters"], path_params)
+
+            # get path parameters from each of the path's operation objects
+            for operation_content in path_content.values():
+                if "parameters" in operation_content:
+                    self.parse_path_params(operation_content["parameters"], path_params)
+
+            # convert each of the parameter types from OpenAPI to Django
+            django_path_params = {
+                param_name: self.openapi_to_django_type(param_type)
+                for (param_name, param_type) in path_params.items()
+            }
+
+            paths_data.append(PathData(path_name, django_path_params))
+
+        return paths_data
 
     def write_urls_file(
         self: Self,
@@ -238,41 +258,6 @@ class Command(BaseCommand):
 
         print(f"Wrote generated view functions to {views_target_path}.")
 
-    def get_paths_data(
-        self: Self, openapi: Mapping[str, Any] | list[Any]
-    ) -> list[PathData]:
-        """Gets required data for all paths in an OpenAPI document.
-
-        Args:
-            openapi: Python representation of an OpenAPI document.
-
-        Returns:
-            List of PathData objects gathered from the OpenAPI document.
-        """
-        paths_data = []
-
-        for path_name, path_content in openapi["paths"].items():
-            path_params = {}
-
-            # get path parameters from the path object
-            if "parameters" in path_content:
-                self.parse_path_params(path_content["parameters"], path_params)
-
-            # get path parameters from each of the path's operation objects
-            for operation_content in path_content.values():
-                if "parameters" in operation_content:
-                    self.parse_path_params(operation_content["parameters"], path_params)
-
-            # convert each of the parameter types from OpenAPI to Django
-            django_path_params = {
-                param_name: self.openapi_to_django_type(param_type)
-                for (param_name, param_type) in path_params.items()
-            }
-
-            paths_data.append(PathData(path_name, django_path_params))
-
-        return paths_data
-
     def parse_path_params(
         self: Self,
         params_list: list[Mapping[str, Any]],
@@ -288,7 +273,7 @@ class Command(BaseCommand):
             which is checked for conflicts and used to store new path parameters.
 
         Raises:
-            Exception: Raised if there is a conflicting path parameter (same name but different type).
+            Exception: There is a conflicting path parameter (same name but different type).
         """
         for parameter in params_list:
             if parameter["in"] != "path":
@@ -303,6 +288,25 @@ class Command(BaseCommand):
             elif current_params[param_name] != param_type:
                 raise Exception(f"Conflicting parameter type: {param_name}")
 
+    def openapi_to_django_type(self: Self, param_type: str) -> str:
+        """Convert an OpenAPI type to its equivalent Django type.
+
+        Args:
+            param_type: Name of the OpenAPI type to be converted.
+
+        Returns:
+            Name of the equivalent Django type, or a default type if not found.
+        """
+        # maps the OpenAPI path parameter types to Django path parameter types
+        OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
+        DEFAULT_DJANGO_TYPE = "str"
+
+        return (
+            OPENAPI_DJANGO_TYPE_MAP[param_type]
+            if param_type in OPENAPI_DJANGO_TYPE_MAP
+            else DEFAULT_DJANGO_TYPE
+        )
+
     def get_django_path(self: Self, path_data: PathData) -> DjangoPath:
         """Generate a DjangoPath dataclass object from a path.
 
@@ -316,6 +320,51 @@ class Command(BaseCommand):
         view_name = self.get_view_from_path(path_data.openapi_path)
 
         return DjangoPath(url, view_name)
+
+    def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
+        """Generate an import statement for the views file, to be used in the URLs file.
+
+        Args:
+            urls_path: Path object for the URLs file.
+            views_path: Path object for the views file.
+
+        Returns:
+            Import statement for the views file relative to the URLs file.
+        """
+        urls_parts = list(urls_path.parts)
+        views_parts = list(views_path.parts)
+
+        # discard the common parent directories for both paths
+        while (
+            len(urls_parts) > 0
+            and len(views_parts) > 0
+            and urls_parts[0] == views_parts[0]
+        ):
+            urls_parts.pop(0)
+            views_parts.pop(0)
+
+        if len(urls_parts) == len(views_parts):
+            # urls and views are in the same directory
+            import_statement = f"import {views_path.stem}"
+        elif len(urls_parts) < len(views_parts):
+            # views is in a child directory of the urls file's directory
+            import_statement = (
+                f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
+            )
+        elif len(urls_parts) > len(views_parts):
+            # urls is in a child directory of the views file's directory
+            num_parents = len(urls_parts) - len(views_parts)
+
+            import_statement = "import sys\n"
+            import_statement += "from pathlib import Path\n"
+            import_statement += "# TODO (OpenAPI to Django) consider moving views.py out of parent directory\n"
+            # add the views directory to the module path so it can be imported
+            import_statement += (
+                f"sys.path.insert(0, str(Path(__file__).parents[{num_parents}]))\n"
+            )
+            import_statement += f"import {views_path.stem}"
+
+        return import_statement
 
     def get_django_view(self: Self, path_data: PathData) -> DjangoView:
         """Generate a DjangoView dataclass object from a path.
@@ -395,69 +444,3 @@ class Command(BaseCommand):
         split_slash = re.compile("(?<=\/)([^\/]+)")
         tokens = split_slash.findall(path)
         return tokens
-
-    def openapi_to_django_type(self: Self, param_type: str) -> str:
-        """Convert an OpenAPI type to its equivalent Django type.
-
-        Args:
-            param_type: Name of the OpenAPI type to be converted.
-
-        Returns:
-            Name of the equivalent Django type, or a default type if not found.
-        """
-        # maps the OpenAPI path parameter types to Django path parameter types
-        OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
-
-        # sets a default value for the type, used if it isn't recognised
-        DEFAULT_DJANGO_TYPE = "str"
-
-        return (
-            OPENAPI_DJANGO_TYPE_MAP[param_type]
-            if param_type in OPENAPI_DJANGO_TYPE_MAP
-            else DEFAULT_DJANGO_TYPE
-        )
-
-    def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
-        """Generate an import statement for the views file, to be used in the URLs file.
-
-        Args:
-            urls_path: Path object for the URLs file.
-            views_path: Path object for the views file.
-
-        Returns:
-            Import statement for the views file relative to the URLs file.
-        """
-        urls_parts = list(urls_path.parts)
-        views_parts = list(views_path.parts)
-
-        # discard the common parent directories for both paths
-        while (
-            len(urls_parts) > 0
-            and len(views_parts) > 0
-            and urls_parts[0] == views_parts[0]
-        ):
-            urls_parts.pop(0)
-            views_parts.pop(0)
-
-        if len(urls_parts) == len(views_parts):
-            # urls and views are in the same directory
-            import_statement = f"import {views_path.stem}"
-        if len(urls_parts) < len(views_parts):
-            # views is in a child directory of the urls file's directory
-            import_statement = (
-                f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
-            )
-        elif len(urls_parts) > len(views_parts):
-            # urls is in a child directory of the views file's directory
-            num_parents = len(urls_parts) - len(views_parts)
-
-            import_statement = "import sys\n"
-            import_statement += "from pathlib import Path\n"
-            import_statement += "# TODO (OpenAPI to Django) consider moving views.py out of parent directory\n"
-            # add the views directory to the module path so it can be imported
-            import_statement += (
-                f"sys.path.insert(0, str(Path(__file__).parents[{num_parents}]))\n"
-            )
-            import_statement += f"import {views_path.stem}"
-
-        return import_statement
