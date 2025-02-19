@@ -444,3 +444,9 @@ class Command(BaseCommand):
         split_slash = re.compile("(?<=\/)([^\/]+)")
         tokens = split_slash.findall(path)
         return tokens
+
+
+if __name__ == "__main__":
+    print("error: tried to run loadopenapi.py directly")
+    print("Copy this file to the directory 'management/commands/' in a Django app.")
+    print("Then, run the command using 'python3 manage.py loadopenapi'.")
