@@ -122,19 +122,19 @@ class Command(BaseCommand):
 
         if file_type:
             # set file type to the manually specified one if given
-            openapi_file_type = FileType[file_type]
+            openapi_file_type = file_type
         else:
             # attempts to identify a file type from the file extension
             if openapi_path.suffix in JSON_EXTENSIONS:
-                openapi_file_type = FileType.JSON
+                openapi_file_type = FileType.JSON.value
             elif openapi_path.suffix in YAML_EXTENSIONS:
-                openapi_file_type = FileType.YAML
+                openapi_file_type = FileType.YAML.value
 
         # attempt to parse the file according to the determined file type
-        if openapi_file_type == FileType.JSON:
+        if openapi_file_type == FileType.JSON.value:
             with open(openapi_path, "r") as json_file:
                 openapi = json.load(json_file)
-        elif openapi_file_type == FileType.YAML:
+        elif openapi_file_type == FileType.YAML.value:
             with open(openapi_path, "r") as yaml_file:
                 openapi = yaml.safe_load(yaml_file)
         else:
