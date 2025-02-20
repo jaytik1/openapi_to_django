@@ -27,7 +27,7 @@ def main():
     parser.add_argument(
         "-t",
         "--file-type",
-        help="file type of the OpenAPI document",
+        help="file type of the OpenAPI document (not required, the program will attempt to estimate the file type if not provided)",
         choices=[FileType.JSON.value, FileType.YAML.value],
         required=False,
     )
