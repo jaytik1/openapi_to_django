@@ -22,6 +22,6 @@ from django.http import HttpResponse
 # # # OpenAPI to Django Views # # #
 {% for view in views %}
 
-def {{ view.view_name }}({% for name, type in view.params.items %}{{ name }}: {{ type }}{% endfor %}):
+def {{ view.view_name }}(request{% for name, type in view.params.items %}, {{ name }}: {{ type }}{% endfor %}):
     return HttpResponse(status=200)
 {% endfor %}
