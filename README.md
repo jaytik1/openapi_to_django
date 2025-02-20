@@ -10,7 +10,7 @@ While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can gener
 
 ## Setup
 
-```bash
+```shell
 # create a Python virtual environment
 python3 -m venv .venv
 
@@ -24,42 +24,46 @@ pip install -r requirements.txt
 
 ## Creating a New Django Project
 
-This repository includes a helper script `src/main.py`, used for generating a new Django project and loading an OpenAPI document in one go. The commands below give some examples of how this script can be used:
+This repository includes a helper script `src/main.py`, used for generating a new Django project and loading an OpenAPI document in one go.
 
-```bash
+The commands below give some examples of how this script can be used:
+
+```shell
 # example: view all arguments for the script (START HERE)
-python3 src/main.py --help
+python3 main.py --help
 
 # example: create a new project with a specified project name
-python3 src/main.py --project-name example_project myopenapi.json
+python3 main.py myopenapi.json \
+--project-name example_project
 
-# example: create a new project with specified project and app names, with the OpenAPI file type specified as YAML
-python3 src/main.py --project-name example_project --app-name example_app --file-type yaml openapidoc
+# example: create a new project with specified project and app names from a YAML OpenAPI document
+python3 main.py openapidoc --file-type yaml \
+--project-name example_project --app-name example_app
 ```
 
 ## Using in an Existing Django Project
 
-The `loadopenapi.py` script be installed as a command in an existing Django project (see the FAQs below for instructions). The commands below demonstrate how the command can be used:
+The `loadopenapi.py` script be installed as a command in an existing Django project (see the FAQs below for instructions).
 
-```bash
+The commands below demonstrate how `loadopenapi` can be used:
+
+```shell
 # example: view all arguments for the script (START HERE)
 python3 manage.py loadopenapi --help
 
 # example: load a YAML OpenAPI document using the provided templates
-python3 manage.py loadopenapi \
+python3 manage.py loadopenapi openapidoc --file-type yaml \
 --urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl \
---file-type yaml openapidoc
 
 # example: load an OpenAPI document using the provided templates to specific locations
-python3 manage.py loadopenapi \
+python3 manage.py loadopenapi openapi.json \
 --urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl \
 --urls-target myproject/myproject/urls.py --views-target myproject/myapp/views.py \
-openapi.json
 ```
 
 ## Features
 
-- Supports loading the generated content to both new and existing Django projects
+- Generates content from an OpenAPI document for both new and existing Django projects
 - Generates Django paths in a `urls.py` file for each path in the given OpenAPI document
 - Generates corresponding functions in a `views.py` file for each OpenAPI path
 - Example OpenAPI documents are provided (`openapi/example.yaml` and `openapi/example.json`)
@@ -70,17 +74,15 @@ openapi.json
 
 ## FAQs
 
-Q: *How can I install the `loadopenapi` command in my Django project? When trying to run `python3 manage.py loadopenapi`, it says "Unknown command: 'loadopenapi'".*
+### How can I install the `loadopenapi` command in my Django project?
 
-A:
 - Make sure your Django project has an app inside (can be created with `python3 manage.py startapp <name>`)
 - Make sure the Django app is included in the `INSTALLED_APPS` list in the project's `settings.py` file
 - Make sure the `loadopenapi.py` file exists in the `management/commands/` directory of the Django app (create these directories if needed, then copy `loadopenapi.py` from the `src/` folder)
 - You should then be able to run `python3 manage.py loadopenapi` successfully!
 
-Q: *What are template files and how do I use them?*
+### What are template files and how do I use them?
 
-A:
 - Template files have the extension `.py-tpl` and can be found in the `templates/` folder
 - They are used by Django to render files in a specific way, and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
 - As well as this program, they are used by Django's built-in `startproject` and `startapp` commands
