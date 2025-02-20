@@ -1,0 +1,27 @@
+{% spaceless %}
+{% comment %}
+
+Template file for rendering urls.py entries for each OpenAPI endpoint.
+Specify how the endpoints parsed from the OpenAPI document should be added to Django's urls.py file.
+
+Context Variables:
+- urls_exists: determines whether writing to an existing urls.py file, to decide if imports and initial variables need to be written
+- paths: a list of DjangoPath dataclass objects to generate each path
+  - url: the URL for the endpoint (includes path parameters in the format "<type:name>")
+  - view_name: the name of the corresponding views.py function for that path
+
+Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
+
+{% endcomment %}{% if not urls_exists %}from django.urls import path{% endif %}{% endspaceless %}
+{{ views_import }}
+{% if not urls_exists %}
+
+urlpatterns = []{% endif %}
+
+# # # OpenAPI to Django Endpoints # # #
+
+openapi_endpoints = [{% for path in paths %}
+    path('{{ path.url }}', {{ views_name }}.{{ path.view_name }}),{% endfor %}
+]
+
+urlpatterns += openapi_endpoints
