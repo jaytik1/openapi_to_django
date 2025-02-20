@@ -85,7 +85,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        """Handle the loadopenapi command when it is run.
+        """
+        Handle the loadopenapi command when it is run.
         Validate command line arguments, then run the necessary functions.
 
         Raises:
@@ -144,15 +145,26 @@ class Command(BaseCommand):
 
         paths_data = self.get_paths_data(openapi)
 
-        self.write_urls_file(
-            paths_data, urls_target_path, urls_template_path, views_target_path
+        # render and write the URLs file
+        urls_context = self.generate_urls_context(
+            paths_data, urls_target_path, views_target_path
         )
-        self.write_views_file(paths_data, views_target_path, views_template_path)
+        self.write_file_from_template(
+            urls_target_path, urls_template_path, urls_context
+        )
+        print(f"Loaded Django URL paths to {urls_target_path}.")
+
+        # render and write the views file
+        views_context = self.generate_views_context(paths_data, views_target_path)
+        self.write_file_from_template(
+            views_target_path, views_template_path, views_context
+        )
+        print(f"Loaded Django views to {views_target_path}.")
 
     def get_paths_data(
         self: Self, openapi: Mapping[str, Any] | list[Any]
     ) -> list[PathData]:
-        """Gets required data for all paths in an OpenAPI document.
+        """Get required data for all paths in an OpenAPI document.
 
         Args:
             openapi: Python representation of an OpenAPI document.
@@ -184,33 +196,33 @@ class Command(BaseCommand):
 
         return paths_data
 
-    def write_urls_file(
+    def generate_urls_context(
         self: Self,
         paths_data: list[PathData],
         urls_target_path: Path,
-        urls_template_path: Path,
         views_target_path: Path,
-    ):
-        """Render and write a Django urls.py file.
+    ) -> Context:
+        """Generate the template context for the Django urls.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
             urls_target_path: Path where the urls.py file should be written.
-            urls_template_path: Path of the urls.py template file.
             views_target_path: Path where the views.py file should be written.
+
+        Returns:
+            Context object to be used by the URLs template.
         """
-        # generate DjangoPath objects for each path
-        paths = [self.get_django_path(path_data) for path_data in paths_data]
+        paths = []
 
-        with open(urls_template_path, "r") as urls_template_file:
-            urls_template_string = urls_template_file.read()
-
-        # convert the urls.py template file content to a renderable Template object
-        urls_template = Engine().from_string(urls_template_string)
+        # generate a DjangoPath object for each path
+        for path_data in paths_data:
+            url = self.get_url_from_path(path_data.openapi_path, path_data.path_params)
+            view_name = self.get_view_from_path(path_data.openapi_path)
+            paths.append(DjangoPath(url, view_name))
 
         views_import = self.generate_views_import(urls_target_path, views_target_path)
 
-        urls_context = Context(
+        return Context(
             {
                 "paths": paths,
                 "urls_exists": urls_target_path.is_file(),
@@ -219,44 +231,53 @@ class Command(BaseCommand):
             },
             autoescape=False,
         )
-        rendered_urls = urls_template.render(urls_context)
 
-        with open(urls_target_path, "a") as urls_file:
-            urls_file.write(rendered_urls)
-
-        print(f"Loaded OpenAPI paths to {urls_target_path}.")
-
-    def write_views_file(
+    def generate_views_context(
         self: Self,
         paths_data: list[PathData],
         views_target_path: Path,
-        views_template_path: Path,
-    ):
-        """Render and write a Django views.py file.
+    ) -> Context:
+        """Generate the template context for the Django views.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
             views_target_path: Path where the views.py file should be written.
-            views_template_path: Path of the views.py template file.
+
+        Returns:
+            Context object to be used by the views template.
         """
-        views = [self.get_django_view(path_data) for path_data in paths_data]
+        views = []
 
-        with open(views_template_path, "r") as views_template_file:
-            views_template_string = views_template_file.read()
+        # generate a DjangoView object for each path
+        for path_data in paths_data:
+            view_name = self.get_view_from_path(path_data.openapi_path)
+            views.append(DjangoView(view_name, path_data.path_params))
 
-        # convert the views.py template file content to a renderable Template object
-        views_template = Engine().from_string(views_template_string)
-
-        views_context = Context(
+        return Context(
             {"views": views, "views_exists": views_target_path.is_file()},
             autoescape=False,
         )
-        rendered_views = views_template.render(views_context)
 
-        with open(views_target_path, "a") as views_file:
-            views_file.write(rendered_views)
+    def write_file_from_template(
+        self: Self, target_path: Path, template_path: Path, context: Context
+    ):
+        """Render a template and its context and write to a specified file path.
 
-        print(f"Wrote generated view functions to {views_target_path}.")
+        Args:
+            target_path: Path where the rendered content should be written.
+            template_path: Path to the template.
+            context: Context to be used by the template.
+        """
+        with open(template_path, "r") as template_file:
+            template_string = template_file.read()
+
+        # convert the template file content to a renderable Template object
+        template = Engine().from_string(template_string)
+
+        rendered_file = template.render(context)
+
+        with open(target_path, "a") as target_file:
+            target_file.write(rendered_file)
 
     def parse_path_params(
         self: Self,
@@ -307,20 +328,6 @@ class Command(BaseCommand):
             else DEFAULT_DJANGO_TYPE
         )
 
-    def get_django_path(self: Self, path_data: PathData) -> DjangoPath:
-        """Generate a DjangoPath dataclass object from a path.
-
-        Args:
-            path_data: Data about the given path.
-
-        Returns:
-            A DjangoPath object representing the given path.
-        """
-        url = self.get_url_from_path(path_data.openapi_path, path_data.path_params)
-        view_name = self.get_view_from_path(path_data.openapi_path)
-
-        return DjangoPath(url, view_name)
-
     def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
         """Generate an import statement for the views file, to be used in the URLs file.
 
@@ -356,19 +363,6 @@ class Command(BaseCommand):
             import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
 
         return import_statement
-
-    def get_django_view(self: Self, path_data: PathData) -> DjangoView:
-        """Generate a DjangoView dataclass object from a path.
-
-        Args:
-            path_data: Data about the given path.
-
-        Returns:
-            A DjangoView object representing the given path.
-        """
-        view_name = self.get_view_from_path(path_data.openapi_path)
-
-        return DjangoView(view_name, path_data.path_params)
 
     def get_url_from_path(self: Self, path: str, path_params: Mapping[str, str]) -> str:
         """Generate a Django path URL from an OpenAPI path.
@@ -423,7 +417,8 @@ class Command(BaseCommand):
         return "_".join(view_tokens)  # generate the views.py function name
 
     def get_tokens_from_path(self: Self, path: str) -> list[str]:
-        """Splits a URL path by its slashes (/) to get each of its tokens.
+        """
+        Split a URL path by its slashes (/) to get each of its tokens.
         (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
 
         Args:
