@@ -53,12 +53,12 @@ python3 manage.py loadopenapi --help
 
 # example: load a YAML OpenAPI document using the provided templates
 python3 manage.py loadopenapi openapidoc --file-type yaml \
---urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl \
+--urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl
 
 # example: load an OpenAPI document using the provided templates to specific locations
 python3 manage.py loadopenapi openapi.json \
 --urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl \
---urls-target myproject/myproject/urls.py --views-target myproject/myapp/views.py \
+--urls-target myproject/myproject/urls.py --views-target myproject/myapp/views.py
 ```
 
 ## Features
@@ -87,7 +87,7 @@ python3 manage.py loadopenapi openapi.json \
 - They are used by Django to render files in a specific way, and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
 - As well as this program, they are used by Django's built-in `startproject` and `startapp` commands
 - The template files for this project are used to generate a Django project with `main.py` and generate files with the `loadopenapi` command
-- The `urls.py-tpl` and `views.py-tpl` are the key files, as they determine how OpenAPI paths are converted to Django paths and view functions
+- `urls.py-tpl` and `views.py-tpl` are the key files, as they determine how OpenAPI paths are converted to Django paths and view functions
 - If you don't like how they render, you can create your own template files and use them with `loadopenapi`'s `--urls-template` and `--views-template` arguments!
 
 ## Licensing
