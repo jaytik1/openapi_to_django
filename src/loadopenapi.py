@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Mapping, Self
 
 
+# maps the OpenAPI path parameter types to Django path parameter types
+OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
+DEFAULT_DJANGO_TYPE = "str"
+
 JSON_EXTENSIONS = [".json"]
 YAML_EXTENSIONS = [".yaml", ".yml"]
 
@@ -188,7 +192,7 @@ class Command(BaseCommand):
 
             # convert each of the parameter types from OpenAPI to Django
             django_path_params = {
-                param_name: self.openapi_to_django_type(param_type)
+                param_name: OPENAPI_DJANGO_TYPE_MAP.get(param_type, DEFAULT_DJANGO_TYPE)
                 for (param_name, param_type) in path_params.items()
             }
 
@@ -308,25 +312,6 @@ class Command(BaseCommand):
                 current_params[param_name] = param_type
             elif current_params[param_name] != param_type:
                 raise Exception(f"Conflicting parameter type: {param_name}")
-
-    def openapi_to_django_type(self: Self, param_type: str) -> str:
-        """Convert an OpenAPI type to its equivalent Django type.
-
-        Args:
-            param_type: Name of the OpenAPI type to be converted.
-
-        Returns:
-            Name of the equivalent Django type, or a default type if not found.
-        """
-        # maps the OpenAPI path parameter types to Django path parameter types
-        OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
-        DEFAULT_DJANGO_TYPE = "str"
-
-        return (
-            OPENAPI_DJANGO_TYPE_MAP[param_type]
-            if param_type in OPENAPI_DJANGO_TYPE_MAP
-            else DEFAULT_DJANGO_TYPE
-        )
 
     def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
         """Generate an import statement for the views file, to be used in the URLs file.
