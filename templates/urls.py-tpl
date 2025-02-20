@@ -24,4 +24,4 @@ openapi_endpoints = [{% for path in paths %}
     path('{{ path.url }}', {{ views_name }}.{{ path.view_name }}),{% endfor %}
 ]
 
-urlpatterns.append(openapi_endpoints)
+urlpatterns += openapi_endpoints
