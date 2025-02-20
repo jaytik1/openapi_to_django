@@ -343,26 +343,17 @@ class Command(BaseCommand):
             urls_parts.pop(0)
             views_parts.pop(0)
 
-        if len(urls_parts) == len(views_parts):
+        if len(urls_parts) == 1 and len(views_parts) == 1:
             # urls and views are in the same directory
             import_statement = f"import {views_path.stem}"
         elif len(urls_parts) < len(views_parts):
-            # views is in a child directory of the urls file's directory
+            # views is in a deeper directory than urls
             import_statement = (
                 f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
             )
-        elif len(urls_parts) > len(views_parts):
-            # urls is in a child directory of the views file's directory
-            num_parents = len(urls_parts) - len(views_parts)
-
-            import_statement = "import sys\n"
-            import_statement += "from pathlib import Path\n"
-            import_statement += "# TODO (OpenAPI to Django) consider moving views.py out of parent directory\n"
-            # add the views directory to the module path so it can be imported
-            import_statement += (
-                f"sys.path.insert(0, str(Path(__file__).parents[{num_parents}]))\n"
-            )
-            import_statement += f"import {views_path.stem}"
+        elif len(urls_parts) >= len(views_parts):
+            # urls is in an equal-depth or deeper directory than views
+            import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
 
         return import_statement
 
