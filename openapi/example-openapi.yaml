@@ -1,8 +1,10 @@
 openapi: 3.1.1
 info:
   title: OpenAPI to Django Example
-  description: This is an example document for the [OpenAPI to Django](https://github.com/jaytik1/openapi-to-django)
-    project, used to convert OpenAPI specifications into Django skeleton projects.
+  description: >-
+    This is an example document for the [OpenAPI to
+    Django](https://github.com/jaytik1/openapi-to-django) project, used to
+    convert OpenAPI specifications into Django skeleton projects.
   license:
     name: MIT License
     url: https://opensource.org/license/mit
@@ -11,23 +13,23 @@ externalDocs:
   description: OpenAPI to Django GitHub repository
   url: https://github.com/jaytik1/openapi-to-django
 servers:
-- url: https://example.com/
+  - url: https://example.com/
 tags:
-- name: example
-  description: Example endpoints
-  externalDocs:
-    description: Find out more
-    url: http://example.com/
+  - name: example
+    description: Example endpoints
+    externalDocs:
+      description: Find out more
+      url: http://example.com/
 paths:
   /example/{id}:
     get:
       tags:
-      - example
+        - example
       summary: Get an example
       description: Get an example
       operationId: getExample
       parameters:
-      - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Id'
       responses:
         '200':
           $ref: '#/components/responses/ExampleSuccess'
@@ -36,16 +38,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       security:
-      - example_auth:
-        - read:example
+        - example_auth:
+            - read:example
     head:
       tags:
-      - example
+        - example
       summary: Headers for getting a given example
       description: Headers for getting a given example
       operationId: headExample
       parameters:
-      - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Id'
       responses:
         '200':
           description: Headers for getting a given example
@@ -54,16 +56,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       security:
-      - example_auth:
-        - read:example
+        - example_auth:
+            - read:example
     put:
       tags:
-      - example
+        - example
       summary: Update a given example
       description: Update a given example
       operationId: updateExample
       parameters:
-      - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Id'
       requestBody:
         $ref: '#/components/requestBodies/ExampleRequest'
       responses:
@@ -74,16 +76,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       security:
-      - example_auth:
-        - write:example
+        - example_auth:
+            - write:example
     patch:
       tags:
-      - example
+        - example
       summary: Update part of a given example
       description: Update part of a given example
       operationId: patchExample
       parameters:
-      - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Id'
       requestBody:
         $ref: '#/components/requestBodies/ExampleRequest'
       responses:
@@ -94,16 +96,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       security:
-      - example_auth:
-        - write:example
+        - example_auth:
+            - write:example
     delete:
       tags:
-      - example
+        - example
       summary: Delete a given example
       description: Delete a given example
       operationId: deleteExample
       parameters:
-      - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Id'
       responses:
         '204':
           description: Deleted example
@@ -112,12 +114,12 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       security:
-      - example_auth:
-        - write:example
+        - example_auth:
+            - write:example
   /example:
     post:
       tags:
-      - example
+        - example
       summary: Create a new example
       description: Create a new example
       operationId: createExample
@@ -129,11 +131,11 @@ paths:
         '400':
           description: Invalid input
       security:
-      - example_auth:
-        - write:example
+        - example_auth:
+            - write:example
     options:
       tags:
-      - example
+        - example
       summary: Options for the example endpoint
       description: Options for the example endpoint
       operationId: optionsExample
@@ -142,20 +144,22 @@ paths:
           description: Options for the example endpoint
     trace:
       tags:
-      - example
+        - example
       summary: Trace the example endpoint
       description: Trace the example endpoint
       operationId: traceExample
       responses:
         '200':
           description: Trace the example endpoint
+  /newExample:
+    $ref: '#/components/pathItems/newExamplePath'
 components:
   schemas:
     Example:
       required:
-      - dateExample
-      - integerExample
-      - objectExample
+        - dateExample
+        - integerExample
+        - objectExample
       type: object
       properties:
         stringExample:
@@ -177,9 +181,9 @@ components:
           items:
             type: string
             enum:
-            - Monday
-            - Wednesday
-            - Friday
+              - Monday
+              - Wednesday
+              - Friday
             example: Wednesday
             xml:
               name: Day
@@ -192,15 +196,6 @@ components:
               example: 5
       xml:
         name: Example
-  parameters:
-    Id:
-      name: id
-      in: path
-      description: Example path parameter
-      required: true
-      schema:
-        type: integer
-        example: 11
   responses:
     ExampleSuccess:
       description: Successful operation
@@ -215,10 +210,44 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Example'
+    NewExampleSuccess:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Example'
+        application/xml:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Example'
+      headers:
+        Server:
+          $ref: '#/components/headers/ExampleServerHeader'
     InvalidId:
       description: Invalid ID
     NotFound:
       description: Example not found
+  parameters:
+    Id:
+      name: id
+      in: path
+      description: Example path parameter
+      required: true
+      schema:
+        type: integer
+      examples:
+        Id49:
+          summary: Example ID with value 49
+          value: 49
+        Id83:
+          $ref: '#/components/examples/ExampleId83'
+  examples:
+    ExampleId83:
+      summary: Example ID with value 83
+      value: 83
   requestBodies:
     ExampleRequest:
       description: Example request body
@@ -232,6 +261,12 @@ components:
         application/x-www-form-urlencoded:
           schema:
             $ref: '#/components/schemas/Example'
+  headers:
+    ExampleServerHeader:
+      description: The server being used
+      schema:
+        type: string
+        example: Example Server
   securitySchemes:
     example_auth:
       type: oauth2
@@ -241,3 +276,18 @@ components:
           scopes:
             write:example: Modify examples
             read:example: Read examples
+  pathItems:
+    newExamplePath:
+      get:
+        tags:
+          - example
+        summary: Get an example in a new way
+        description: Get an example in a new way
+        operationId: getNewExample
+        responses:
+          '200':
+            $ref: '#/components/responses/NewExampleSuccess'
+          '400':
+            $ref: '#/components/responses/InvalidId'
+          '404':
+            $ref: '#/components/responses/NotFound'
