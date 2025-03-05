@@ -49,6 +49,8 @@ class DjangoView:
 class Command(BaseCommand):
     help = "Generate Django code by loading a specified OpenAPI document"
 
+    openapi: Mapping[str, Any] | None = None
+
     def add_arguments(self, parser):
         """Add command line arguments for the command.
 
@@ -147,7 +149,10 @@ class Command(BaseCommand):
                 "OpenAPI file type not determined, use --file-type to specify"
             )
 
-        paths_data = self.get_paths_data(openapi)
+        # resolve all reference objects in the OpenAPI document
+        self.openapi = self.resolve_ref_objects(openapi, openapi)
+
+        paths_data = self.get_paths_data(self.openapi)
 
         # render and write the URLs file
         urls_context = self.generate_urls_context(
@@ -165,9 +170,55 @@ class Command(BaseCommand):
         )
         print(f"Loaded Django views to {views_target_path}.")
 
-    def get_paths_data(
-        self: Self, openapi: Mapping[str, Any] | list[Any]
-    ) -> list[PathData]:
+    def resolve_ref_objects(self: Self, current: Any, base_dict: dict) -> Any:
+        """Recursively resolve all reference objects (if any) inside an given variable.
+
+        Args:
+            current: Current variable to be resolved.
+            base_object: Dictionary checked to resolve the referenced URIs.
+
+        Raises:
+            Exception: Reference object format is invalid or target doesn't exist.
+
+        Returns:
+            The object with all reference objects inside resolved.
+        """
+        # return the current variable if isn't a dictionary or a list (base case)
+        if not isinstance(current, dict) and not isinstance(current, list):
+            return current
+
+        # resolve all items in the list
+        if isinstance(current, list):
+            return [self.resolve_ref_objects(item, base_dict) for item in current]
+
+        # resolve each dictionary value if the dictionary doesn't contain a ref
+        if "$ref" not in current:
+            return {
+                key: self.resolve_ref_objects(val, base_dict)
+                for key, val in current.items()
+            }
+
+        # raise an exception if the dictionary contains other data as well as a ref
+        if len(current) != 1:
+            raise Exception(
+                f"Dictionary contains other data as well as a reference object: {current}"
+            )
+
+        uri = current["$ref"]
+
+        # references to parts of the same document must start with #
+        if uri[0] != "#":
+            raise Exception(f"Reference object URI doesn't start with '#': {current}")
+
+        tokens = self.get_tokens_from_uri(uri)
+        result = self.traverse_nested_dictionary(base_dict, tokens)
+
+        if result is None:
+            raise Exception(f"Reference object location doesn't exist! {current}")
+
+        return self.resolve_ref_objects(result, base_dict)
+
+    def get_paths_data(self: Self, openapi: Mapping[str, Any]) -> list[PathData]:
         """Get required data for all paths in an OpenAPI document.
 
         Args:
@@ -283,6 +334,44 @@ class Command(BaseCommand):
         with open(target_path, "a") as target_file:
             target_file.write(rendered_file)
 
+    def get_tokens_from_uri(self: Self, path: str) -> list[str]:
+        """
+        Split a URI by its slashes (/) to get each of its tokens.
+        (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
+
+        Args:
+            path: URI to be split.
+
+        Returns:
+            A list of tokens present in the given URI.
+        """
+        split_slash = re.compile("(?<=\/)([^\/]+)")
+        tokens = split_slash.findall(path)
+        return tokens
+
+    def traverse_nested_dictionary(
+        self: Self, dictionary: dict, keys: list[str]
+    ) -> dict | None:
+        """Recursively traverse a nested dictionary using a list of keys.
+
+        Args:
+            dictionary: Dictionary to be traversed.
+            keys: List of keys that should exist in the nested dictionary.
+
+        Returns:
+            The final key's value if it exists within the dictionary.
+            None if the keys don't match the nested dictionary.
+        """
+        if len(keys) == 0:
+            return dictionary
+
+        key = keys.pop(0)
+
+        if key not in dictionary:
+            return None
+
+        return self.traverse_nested_dictionary(dictionary[key], keys)
+
     def parse_path_params(
         self: Self,
         params_list: list[Mapping[str, Any]],
@@ -312,6 +401,58 @@ class Command(BaseCommand):
                 current_params[param_name] = param_type
             elif current_params[param_name] != param_type:
                 raise Exception(f"Conflicting parameter type: {param_name}")
+
+    def get_url_from_path(self: Self, path: str, path_params: Mapping[str, str]) -> str:
+        """Generate a Django path URL from an OpenAPI path.
+
+        Args:
+            path: OpenAPI path string to be used.
+
+        Returns:
+            The Django URL corresponding to the OpenAPI path.
+        """
+        tokens = self.get_tokens_from_uri(path)
+
+        url_tokens = []
+
+        for token in tokens:
+            # get the parameter name inside the braces
+            # e.g. gets "id" from "{id}"
+            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
+            parameter_list = extract_parameter.findall(token)
+
+            # continue if the current token isn't a path parameter
+            if len(parameter_list) != 1:
+                url_tokens.append(token)
+                continue
+
+            param_name = parameter_list[0]
+
+            if param_name not in path_params:
+                raise Exception(
+                    f"Error generating URL: parameter name {param_name} not defined!"
+                )
+
+            param_type = path_params[param_name]
+            url_tokens.append(f"<{param_type}:{param_name}>")
+
+        return "/".join(url_tokens)  # generate the Django path URL
+
+    def get_view_from_path(self: Self, path: str) -> str:
+        """Generate a Django views.py function name from an OpenAPI path.
+
+        Args:
+            path: OpenAPI path string to be used.
+
+        Returns:
+            The name of a views function corresponding to the OpenAPI path.
+        """
+        tokens = self.get_tokens_from_uri(path)
+
+        # remove braces from the path tokens name to generate the view name
+        view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
+
+        return "_".join(view_tokens)  # generate the views.py function name
 
     def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
         """Generate an import statement for the views file, to be used in the URLs file.
@@ -348,73 +489,6 @@ class Command(BaseCommand):
             import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
 
         return import_statement
-
-    def get_url_from_path(self: Self, path: str, path_params: Mapping[str, str]) -> str:
-        """Generate a Django path URL from an OpenAPI path.
-
-        Args:
-            path: OpenAPI path string to be used.
-
-        Returns:
-            The Django URL corresponding to the OpenAPI path.
-        """
-        tokens = self.get_tokens_from_path(path)
-
-        url_tokens = []
-
-        for token in tokens:
-            # get the parameter name inside the braces
-            # e.g. gets "id" from "{id}"
-            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
-            parameter_list = extract_parameter.findall(token)
-
-            # continue if the current token isn't a path parameter
-            if len(parameter_list) != 1:
-                url_tokens.append(token)
-                continue
-
-            param_name = parameter_list[0]
-
-            if param_name not in path_params:
-                raise Exception(
-                    f"Error generating URL: parameter name {param_name} not defined!"
-                )
-
-            param_type = path_params[param_name]
-            url_tokens.append(f"<{param_type}:{param_name}>")
-
-        return "/".join(url_tokens)  # generate the Django path URL
-
-    def get_view_from_path(self: Self, path: str) -> str:
-        """Generate a Django views.py function name from an OpenAPI path.
-
-        Args:
-            path: OpenAPI path string to be used.
-
-        Returns:
-            The name of a views function corresponding to the OpenAPI path.
-        """
-        tokens = self.get_tokens_from_path(path)
-
-        # remove braces from the path tokens name to generate the view name
-        view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
-
-        return "_".join(view_tokens)  # generate the views.py function name
-
-    def get_tokens_from_path(self: Self, path: str) -> list[str]:
-        """
-        Split a URL path by its slashes (/) to get each of its tokens.
-        (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
-
-        Args:
-            path: URL path to be split.
-
-        Returns:
-            A list of tokens present in the given path.
-        """
-        split_slash = re.compile("(?<=\/)([^\/]+)")
-        tokens = split_slash.findall(path)
-        return tokens
 
 
 if __name__ == "__main__":
