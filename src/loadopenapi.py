@@ -140,14 +140,17 @@ class Command(BaseCommand):
         # attempt to parse the file according to the determined file type
         if openapi_file_type == FileType.JSON.value:
             with open(openapi_path, "r") as json_file:
-                self.openapi = json.load(json_file)
+                openapi = json.load(json_file)
         elif openapi_file_type == FileType.YAML.value:
             with open(openapi_path, "r") as yaml_file:
-                self.openapi = yaml.safe_load(yaml_file)
+                openapi = yaml.safe_load(yaml_file)
         else:
             raise CommandError(
                 "OpenAPI file type not determined, use --file-type to specify"
             )
+
+        # resolve all reference objects in the OpenAPI document
+        self.openapi = self.resolve_ref_objects(openapi, openapi)
 
         paths_data = self.get_paths_data(self.openapi)
 
@@ -166,6 +169,54 @@ class Command(BaseCommand):
             views_target_path, views_template_path, views_context
         )
         print(f"Loaded Django views to {views_target_path}.")
+
+    def resolve_ref_objects(self: Self, current: Any, base_dict: dict) -> Any:
+        """Recursively resolve all reference objects (if any) inside an given variable.
+
+        Args:
+            current: Current variable to be resolved.
+            base_object: Dictionary checked to resolve the referenced URIs.
+
+        Raises:
+            Exception: Reference object format is invalid or target doesn't exist.
+
+        Returns:
+            The object with all reference objects inside resolved.
+        """
+        # return the current variable if isn't a dictionary or a list (base case)
+        if not isinstance(current, dict) and not isinstance(current, list):
+            return current
+
+        # resolve all items in the list
+        if isinstance(current, list):
+            return [self.resolve_ref_objects(item, base_dict) for item in current]
+
+        # resolve each dictionary value if the dictionary doesn't contain a ref
+        if "$ref" not in current:
+            return {
+                key: self.resolve_ref_objects(val, base_dict)
+                for key, val in current.items()
+            }
+
+        # raise an exception if the dictionary contains other data as well as a ref
+        if len(current) != 1:
+            raise Exception(
+                f"Dictionary contains other data as well as a reference object: {current}"
+            )
+
+        uri = current["$ref"]
+
+        # references to parts of the same document must start with #
+        if uri[0] != "#":
+            raise Exception(f"Reference object URI doesn't start with '#': {current}")
+
+        tokens = self.get_tokens_from_uri(uri)
+        result = self.traverse_nested_dictionary(base_dict, tokens)
+
+        if result is None:
+            raise Exception(f"Reference object location doesn't exist! {current}")
+
+        return self.resolve_ref_objects(result, base_dict)
 
     def get_paths_data(self: Self, openapi: Mapping[str, Any]) -> list[PathData]:
         """Get required data for all paths in an OpenAPI document.
@@ -283,6 +334,44 @@ class Command(BaseCommand):
         with open(target_path, "a") as target_file:
             target_file.write(rendered_file)
 
+    def get_tokens_from_uri(self: Self, path: str) -> list[str]:
+        """
+        Split a URI by its slashes (/) to get each of its tokens.
+        (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
+
+        Args:
+            path: URI to be split.
+
+        Returns:
+            A list of tokens present in the given URI.
+        """
+        split_slash = re.compile("(?<=\/)([^\/]+)")
+        tokens = split_slash.findall(path)
+        return tokens
+
+    def traverse_nested_dictionary(
+        self: Self, dictionary: dict, keys: list[str]
+    ) -> dict | None:
+        """Recursively traverse a nested dictionary using a list of keys.
+
+        Args:
+            dictionary: Dictionary to be traversed.
+            keys: List of keys that should exist in the nested dictionary.
+
+        Returns:
+            The final key's value if it exists within the dictionary.
+            None if the keys don't match the nested dictionary.
+        """
+        if len(keys) == 0:
+            return dictionary
+
+        key = keys.pop(0)
+
+        if key not in dictionary:
+            return None
+
+        return self.traverse_nested_dictionary(dictionary[key], keys)
+
     def parse_path_params(
         self: Self,
         params_list: list[Mapping[str, Any]],
@@ -301,8 +390,6 @@ class Command(BaseCommand):
             Exception: There is a conflicting path parameter (same name but different type).
         """
         for parameter in params_list:
-            parameter = self.resolve_ref_object(parameter)
-
             if parameter["in"] != "path":
                 # ignore non-path parameters
                 continue
@@ -402,83 +489,6 @@ class Command(BaseCommand):
             import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
 
         return import_statement
-
-    def resolve_ref_object(self: Self, dictionary: dict) -> Any:
-        """Resolve a reference object to get the object being referenced.
-
-        Args:
-            dictionary: Dictionary which may contain a reference object.
-
-        Raises:
-            Exception: Reference object format is invalid or target doesn't exist.
-
-        Returns:
-            The object referenced by the reference object,
-            or the given dictionary if it doesn't contain a reference object.
-        """
-        # ignore if the dictionary doesn't contain a reference object key
-        if "$ref" not in dictionary:
-            return dictionary
-
-        # raise an exception if the dictionary contains other data
-        if len(dictionary) != 1:
-            raise Exception(
-                f"Dictionary contains other data as well as a reference object: {dictionary}"
-            )
-
-        uri = dictionary["$ref"]
-
-        # references to parts of the same document must start with #
-        if uri[0] != "#":
-            raise Exception(
-                f"Reference object URI doesn't start with '#': {dictionary}"
-            )
-
-        tokens = self.get_tokens_from_uri(uri)
-        result = self.traverse_nested_dictionary(self.openapi, tokens)
-
-        if result is None:
-            raise Exception(f"Reference object location doesn't exist! {dictionary}")
-
-        return result
-
-    def get_tokens_from_uri(self: Self, path: str) -> list[str]:
-        """
-        Split a URI by its slashes (/) to get each of its tokens.
-        (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
-
-        Args:
-            path: URI to be split.
-
-        Returns:
-            A list of tokens present in the given URI.
-        """
-        split_slash = re.compile("(?<=\/)([^\/]+)")
-        tokens = split_slash.findall(path)
-        return tokens
-
-    def traverse_nested_dictionary(
-        self: Self, dictionary: dict, keys: list[str]
-    ) -> dict | None:
-        """Recursively traverse a nested dictionary using a list of keys.
-
-        Args:
-            dictionary: Dictionary to be traversed.
-            keys: List of keys that should exist in the nested dictionary.
-
-        Returns:
-            The final key's value if it exists within the dictionary.
-            None if the keys don't match the nested dictionary.
-        """
-        if len(keys) == 0:
-            return dictionary
-
-        key = keys.pop(0)
-
-        if key not in dictionary:
-            return None
-
-        return self.traverse_nested_dictionary(dictionary[key], keys)
 
 
 if __name__ == "__main__":
