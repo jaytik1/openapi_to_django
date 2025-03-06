@@ -1,0 +1,27 @@
+[tool.mypy]
+python_version = "3.11"
+packages = "src"
+
+# mypy output config
+pretty = true
+show_error_context = true
+show_column_numbers = true
+
+# mypy error config
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+strict_equality = true
+no_implicit_reexport = true
+
+# mypy warning config
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+warn_unused_configs = true
+
+# mypy exemptions
+ignore_missing_imports = true
