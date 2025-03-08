@@ -7,7 +7,7 @@ on: ["push"] # TODO remove this line, used for testing
 #    branches: ["main"]
 
 jobs:
-  Static checks:
+  static-checks:
     runs-on: ubuntu-latest
 
     steps:
