@@ -23,6 +23,7 @@ jobs:
     - name: Check type hints with mypy
       run: mypy --junit-xml reports/mypy-junit.xml
     - name: Upload mypy JUnit report
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         path: reports/mypy-junit.xml
