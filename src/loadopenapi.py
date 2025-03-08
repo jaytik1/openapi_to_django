@@ -378,7 +378,7 @@ class Command(BaseCommand):
 
     def parse_path_params(
         self: Self,
-        params_list: list[dict[str, str | bool]],
+        params_list: list[dict[str, Any]],
         current_params: dict[str, str],
     ) -> None:
         """
