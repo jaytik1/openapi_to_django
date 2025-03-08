@@ -20,7 +20,7 @@ class FileType(Enum):
     YAML = "yaml"
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
 
     parser.add_argument("openapi_file", help="file path of the OpenAPI document")

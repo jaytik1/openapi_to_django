@@ -1,13 +1,16 @@
 import json
 import re
 import yaml
+from argparse import ArgumentParser
 from django.core.management.base import BaseCommand, CommandError
 from django.template import Context, Engine
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Mapping, Self
+from typing import Any, Self, TypeAlias
 
+
+OpenApi: TypeAlias = dict[str, Any]
 
 # maps the OpenAPI path parameter types to Django path parameter types
 OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
@@ -27,7 +30,7 @@ class PathData:
     """Data about an OpenAPI path."""
 
     openapi_path: str  # path URL as stored in the OpenAPI document
-    path_params: Mapping[str, str]  # dict of path parameters and their Django types
+    path_params: dict[str, str]  # dict of path parameters and their Django types
 
 
 @dataclass
@@ -43,25 +46,25 @@ class DjangoView:
     """Data required to create a Django view function in views.py."""
 
     view_name: str  # name of the function in views.py
-    params: Mapping[str, str]  # dict of view parameters and their types
+    params: dict[str, str]  # dict of view parameters and their types
 
 
 class Command(BaseCommand):
     help = "Generate Django code by loading a specified OpenAPI document"
 
-    openapi: Mapping[str, Any] | None = None
+    openapi: OpenApi
 
-    def add_arguments(self, parser):
+    def add_arguments(self: Self, parser: ArgumentParser) -> None:
         """Add command line arguments for the command.
 
         Args:
-            parser: Command line argument parser where the arguments are stored.
+            parser: Argument parser for the command.
         """
         parser.add_argument("openapi_file", help="file path of the OpenAPI document")
         parser.add_argument(
             "-t",
             "--file-type",
-            help="file type of the OpenAPI document (not required, the program will attempt to estimate the file type if not provided)",
+            help="(optional) file type of the OpenAPI document",
             choices=[FileType.JSON.value, FileType.YAML.value],
             required=False,
         )
@@ -90,10 +93,9 @@ class Command(BaseCommand):
             default="views.py",
         )
 
-    def handle(self, **options):
+    def handle(self: Self, **options: str) -> None:
         """
-        Handle the loadopenapi command when it is run.
-        Validate command line arguments, then run the necessary functions.
+        Validate command line arguments and load the OpenAPI document to Django.
 
         Raises:
             CommandError: Something went wrong when running the command.
@@ -124,7 +126,6 @@ class Command(BaseCommand):
             # create directory for the views target if it doesn't exist
             views_target_path.parent.mkdir(parents=True)
 
-        # determine the file type of the OpenAPI document
         file_type = options.pop("file_type")
 
         if file_type:
@@ -170,12 +171,12 @@ class Command(BaseCommand):
         )
         print(f"Loaded Django views to {views_target_path}.")
 
-    def resolve_ref_objects(self: Self, current: Any, base_dict: dict) -> Any:
-        """Recursively resolve all reference objects (if any) inside an given variable.
+    def resolve_ref_objects(self: Self, current: Any, base_dict: dict[str, Any]) -> Any:
+        """Recursively resolve all reference objects (if any) inside a given variable.
 
         Args:
             current: Current variable to be resolved.
-            base_object: Dictionary checked to resolve the referenced URIs.
+            base_dict: Dictionary containing the referenced URIs.
 
         Raises:
             Exception: Reference object format is invalid or target doesn't exist.
@@ -204,21 +205,22 @@ class Command(BaseCommand):
                 f"Dictionary contains other data as well as a reference object: {current}"
             )
 
-        uri = current["$ref"]
+        ref_uri = current["$ref"]
 
         # references to parts of the same document must start with #
-        if uri[0] != "#":
+        if ref_uri[0] != "#":
             raise Exception(f"Reference object URI doesn't start with '#': {current}")
 
-        tokens = self.get_tokens_from_uri(uri)
-        result = self.traverse_nested_dictionary(base_dict, tokens)
+        tokens = self.get_tokens_from_uri(ref_uri)
 
-        if result is None:
+        try:
+            result = self.traverse_nested_dictionary(base_dict, tokens)
+        except KeyError:
             raise Exception(f"Reference object location doesn't exist! {current}")
 
         return self.resolve_ref_objects(result, base_dict)
 
-    def get_paths_data(self: Self, openapi: Mapping[str, Any]) -> list[PathData]:
+    def get_paths_data(self: Self, openapi: OpenApi) -> list[PathData]:
         """Get required data for all paths in an OpenAPI document.
 
         Args:
@@ -230,7 +232,7 @@ class Command(BaseCommand):
         paths_data = []
 
         for path_name, path_content in openapi["paths"].items():
-            path_params = {}
+            path_params: dict[str, str] = {}
 
             # get path parameters from the path object
             if "parameters" in path_content:
@@ -315,7 +317,7 @@ class Command(BaseCommand):
 
     def write_file_from_template(
         self: Self, target_path: Path, template_path: Path, context: Context
-    ):
+    ) -> None:
         """Render a template and its context and write to a specified file path.
 
         Args:
@@ -351,16 +353,18 @@ class Command(BaseCommand):
 
     def traverse_nested_dictionary(
         self: Self, dictionary: dict, keys: list[str]
-    ) -> dict | None:
+    ) -> dict:
         """Recursively traverse a nested dictionary using a list of keys.
 
         Args:
             dictionary: Dictionary to be traversed.
             keys: List of keys that should exist in the nested dictionary.
 
+        Raises:
+            KeyError: A given key wasn't found in its nested dict.
+
         Returns:
-            The final key's value if it exists within the dictionary.
-            None if the keys don't match the nested dictionary.
+            The final key's value in its nested dict.
         """
         if len(keys) == 0:
             return dictionary
@@ -368,17 +372,17 @@ class Command(BaseCommand):
         key = keys.pop(0)
 
         if key not in dictionary:
-            return None
+            raise KeyError(f"Key {key} not found in dictionary {dictionary}.")
 
         return self.traverse_nested_dictionary(dictionary[key], keys)
 
     def parse_path_params(
         self: Self,
-        params_list: list[Mapping[str, Any]],
-        current_params: Mapping[str, str],
-    ):
+        params_list: list[dict[str, Any]],
+        current_params: dict[str, str],
+    ) -> None:
         """
-        Parse a list of OpenAPI parameter obejcts to get their names and types.
+        Parse a list of OpenAPI parameter objects to get their names and types.
         Ignores any parameters which aren't path parameters.
 
         Args:
@@ -402,7 +406,7 @@ class Command(BaseCommand):
             elif current_params[param_name] != param_type:
                 raise Exception(f"Conflicting parameter type: {param_name}")
 
-    def get_url_from_path(self: Self, path: str, path_params: Mapping[str, str]) -> str:
+    def get_url_from_path(self: Self, path: str, path_params: dict[str, str]) -> str:
         """Generate a Django path URL from an OpenAPI path.
 
         Args:
