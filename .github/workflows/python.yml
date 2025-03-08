@@ -1,10 +1,10 @@
 name: Python workflow
 
-on: ["push"] # TODO remove this line, used for testing
-#  push:
-#    branches: ["main"]
-#  pull_request:
-#    branches: ["main"]
+on:
+ push:
+   branches: ["main"]
+ pull_request:
+   branches: ["main"]
 
 jobs:
   static-checks:
@@ -21,12 +21,4 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Check type hints with mypy
-      run: mypy --junit-xml reports/mypy-junit.xml
-    - name: Upload mypy JUnit report
-      if: success() || failure()
-      uses: actions/upload-artifact@v4
-      with:
-        path: reports/mypy-junit.xml
-    - name: Test error
-      if: success() || failure()
-      run: echo "::error file=src/loadopenapi.py,line=160,endLine=160,title=mypy test::Incompatible type 'list[PathData]'"
+      run: mypy
