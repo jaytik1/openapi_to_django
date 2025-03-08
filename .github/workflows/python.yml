@@ -23,5 +23,5 @@ jobs:
     - name: Type check with mypy
       run: mypy --cobertura-xml-report reports/ --junit-xml reports/mypy-junit.xml
     - name: Upload mypy Cobertura and JUnit reports
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       path: reports/
