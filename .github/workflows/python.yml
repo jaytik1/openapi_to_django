@@ -27,3 +27,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: reports/mypy-junit.xml
+    - name: Test error
+      run: echo "::error file={src/loadopenapi.py},line={160},endLine={160},title={mypy test}::{Incompatible type 'list[PathData]'}"
