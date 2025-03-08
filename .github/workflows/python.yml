@@ -28,4 +28,5 @@ jobs:
       with:
         path: reports/mypy-junit.xml
     - name: Test error
+      if: success() || failure()
       run: echo "::error file={src/loadopenapi.py},line={160},endLine={160},title={mypy test}::{Incompatible type 'list[PathData]'}"
