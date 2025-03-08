@@ -255,7 +255,7 @@ class Command(BaseCommand):
 
     def generate_urls_context(
         self: Self,
-        paths_data: list[PathData],
+        paths_data: PathData,
         urls_target_path: Path,
         views_target_path: Path,
     ) -> Context:
@@ -351,9 +351,7 @@ class Command(BaseCommand):
         tokens = split_slash.findall(path)
         return tokens
 
-    def traverse_nested_dictionary(
-        self: Self, dictionary: dict, keys: list[str]
-    ) -> dict:
+    def traverse_nested_dictionary(self: Self, dictionary: dict, keys: list[str]):
         """Recursively traverse a nested dictionary using a list of keys.
 
         Args:
@@ -378,7 +376,7 @@ class Command(BaseCommand):
 
     def parse_path_params(
         self: Self,
-        params_list: list[dict[str, Any]],
+        params_list: str,
         current_params: dict[str, str],
     ) -> None:
         """
