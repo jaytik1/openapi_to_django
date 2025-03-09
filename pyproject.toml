@@ -23,3 +23,35 @@ warn_unused_configs = true
 
 # mypy exemptions
 ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py311"
+
+include = ["src/**/*.py"]
+
+line-length = 150
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["B", "EM", "FIX", "ISC", "RET",
+          "PTH", "I", "C90", "E", "W",
+          "D", "PL", "UP", "RUF", "TRY",
+          "S", "BLE", "FBT", "A", "C4",
+          "DTZ", "Q", "RSE", "ARG", "N",
+          "F"]
+
+# E501: ignore line length violations as they can decrease readability
+# D212: prefer docstrings to start on the second line
+# D203: prefer there to not be a space before class docstrings
+# D413: extra blank line at the end of a docstring is unnecessary
+# D400: subset of the more general D415, allow more punctuation
+ignore = ["E501", "D212", "D203", "D413", "D400"]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
