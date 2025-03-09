@@ -1,7 +1,8 @@
 import argparse
-from django.core.management import call_command
 from enum import Enum
 from pathlib import Path
+
+from django.core.management import call_command
 
 import loadopenapi
 

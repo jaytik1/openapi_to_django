@@ -1,14 +1,14 @@
 import json
 import re
-import yaml
 from argparse import ArgumentParser
-from django.core.management.base import BaseCommand, CommandError
-from django.template import Context, Engine
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Self, TypeAlias
 
+import yaml
+from django.core.management.base import BaseCommand, CommandError
+from django.template import Context, Engine
 
 OpenApi: TypeAlias = dict[str, Any]
 
@@ -55,7 +55,8 @@ class Command(BaseCommand):
     openapi: OpenApi
 
     def add_arguments(self: Self, parser: ArgumentParser) -> None:
-        """Add command line arguments for the command.
+        """
+        Add command line arguments for the command.
 
         Args:
             parser: Argument parser for the command.
@@ -106,15 +107,11 @@ class Command(BaseCommand):
 
         urls_template_path = Path(options.pop("urls_template")).resolve()
         if not urls_template_path.is_file():
-            raise CommandError(
-                f"urls.py template file {urls_template_path} does not exist"
-            )
+            raise CommandError(f"urls.py template file {urls_template_path} does not exist")
 
         views_template_path = Path(options.pop("views_template")).resolve()
         if not views_template_path.is_file():
-            raise CommandError(
-                f"views.py template file {views_template_path} does not exist"
-            )
+            raise CommandError(f"views.py template file {views_template_path} does not exist")
 
         urls_target_path = Path(options.pop("urls_target")).resolve()
         if not urls_target_path.parent.is_dir():
@@ -131,24 +128,21 @@ class Command(BaseCommand):
         if file_type:
             # set file type to the manually specified one if given
             openapi_file_type = file_type
-        else:
-            # attempts to identify a file type from the file extension
-            if openapi_path.suffix in JSON_EXTENSIONS:
-                openapi_file_type = FileType.JSON.value
-            elif openapi_path.suffix in YAML_EXTENSIONS:
-                openapi_file_type = FileType.YAML.value
+        # attempts to identify a file type from the file extension
+        elif openapi_path.suffix in JSON_EXTENSIONS:
+            openapi_file_type = FileType.JSON.value
+        elif openapi_path.suffix in YAML_EXTENSIONS:
+            openapi_file_type = FileType.YAML.value
 
         # attempt to parse the file according to the determined file type
         if openapi_file_type == FileType.JSON.value:
-            with open(openapi_path, "r") as json_file:
+            with open(openapi_path) as json_file:
                 openapi = json.load(json_file)
         elif openapi_file_type == FileType.YAML.value:
-            with open(openapi_path, "r") as yaml_file:
+            with open(openapi_path) as yaml_file:
                 openapi = yaml.safe_load(yaml_file)
         else:
-            raise CommandError(
-                "OpenAPI file type not determined, use --file-type to specify"
-            )
+            raise CommandError("OpenAPI file type not determined, use --file-type to specify")
 
         # resolve all reference objects in the OpenAPI document
         self.openapi = self.resolve_ref_objects(openapi, openapi)
@@ -156,23 +150,18 @@ class Command(BaseCommand):
         paths_data = self.get_paths_data(self.openapi)
 
         # render and write the URLs file
-        urls_context = self.generate_urls_context(
-            paths_data, urls_target_path, views_target_path
-        )
-        self.write_file_from_template(
-            urls_target_path, urls_template_path, urls_context
-        )
+        urls_context = self.generate_urls_context(paths_data, urls_target_path, views_target_path)
+        self.write_file_from_template(urls_target_path, urls_template_path, urls_context)
         print(f"Loaded Django URL paths to {urls_target_path}.")
 
         # render and write the views file
         views_context = self.generate_views_context(paths_data, views_target_path)
-        self.write_file_from_template(
-            views_target_path, views_template_path, views_context
-        )
+        self.write_file_from_template(views_target_path, views_template_path, views_context)
         print(f"Loaded Django views to {views_target_path}.")
 
     def resolve_ref_objects(self: Self, current: Any, base_dict: dict[str, Any]) -> Any:
-        """Recursively resolve all reference objects (if any) inside a given variable.
+        """
+        Recursively resolve all reference objects (if any) inside a given variable.
 
         Args:
             current: Current variable to be resolved.
@@ -194,16 +183,11 @@ class Command(BaseCommand):
 
         # resolve each dictionary value if the dictionary doesn't contain a ref
         if "$ref" not in current:
-            return {
-                key: self.resolve_ref_objects(val, base_dict)
-                for key, val in current.items()
-            }
+            return {key: self.resolve_ref_objects(val, base_dict) for key, val in current.items()}
 
         # raise an exception if the dictionary contains other data as well as a ref
         if len(current) != 1:
-            raise Exception(
-                f"Dictionary contains other data as well as a reference object: {current}"
-            )
+            raise Exception(f"Dictionary contains other data as well as a reference object: {current}")
 
         ref_uri = current["$ref"]
 
@@ -221,7 +205,8 @@ class Command(BaseCommand):
         return self.resolve_ref_objects(result, base_dict)
 
     def get_paths_data(self: Self, openapi: OpenApi) -> list[PathData]:
-        """Get required data for all paths in an OpenAPI document.
+        """
+        Get required data for all paths in an OpenAPI document.
 
         Args:
             openapi: Python representation of an OpenAPI document.
@@ -245,8 +230,7 @@ class Command(BaseCommand):
 
             # convert each of the parameter types from OpenAPI to Django
             django_path_params = {
-                param_name: OPENAPI_DJANGO_TYPE_MAP.get(param_type, DEFAULT_DJANGO_TYPE)
-                for (param_name, param_type) in path_params.items()
+                param_name: OPENAPI_DJANGO_TYPE_MAP.get(param_type, DEFAULT_DJANGO_TYPE) for (param_name, param_type) in path_params.items()
             }
 
             paths_data.append(PathData(path_name, django_path_params))
@@ -259,7 +243,8 @@ class Command(BaseCommand):
         urls_target_path: Path,
         views_target_path: Path,
     ) -> Context:
-        """Generate the template context for the Django urls.py file.
+        """
+        Generate the template context for the Django urls.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
@@ -294,7 +279,8 @@ class Command(BaseCommand):
         paths_data: list[PathData],
         views_target_path: Path,
     ) -> Context:
-        """Generate the template context for the Django views.py file.
+        """
+        Generate the template context for the Django views.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
@@ -315,17 +301,16 @@ class Command(BaseCommand):
             autoescape=False,
         )
 
-    def write_file_from_template(
-        self: Self, target_path: Path, template_path: Path, context: Context
-    ) -> None:
-        """Render a template and its context and write to a specified file path.
+    def write_file_from_template(self: Self, target_path: Path, template_path: Path, context: Context) -> None:
+        """
+        Render a template and its context and write to a specified file path.
 
         Args:
             target_path: Path where the rendered content should be written.
             template_path: Path to the template.
             context: Context to be used by the template.
         """
-        with open(template_path, "r") as template_file:
+        with open(template_path) as template_file:
             template_string = template_file.read()
 
         # convert the template file content to a renderable Template object
@@ -347,14 +332,13 @@ class Command(BaseCommand):
         Returns:
             A list of tokens present in the given URI.
         """
-        split_slash = re.compile("(?<=\/)([^\/]+)")
+        split_slash = re.compile(r"(?<=\/)([^\/]+)")
         tokens = split_slash.findall(path)
         return tokens
 
-    def traverse_nested_dictionary(
-        self: Self, dictionary: dict, keys: list[str]
-    ) -> dict:
-        """Recursively traverse a nested dictionary using a list of keys.
+    def traverse_nested_dictionary(self: Self, dictionary: dict, keys: list[str]) -> dict:
+        """
+        Recursively traverse a nested dictionary using a list of keys.
 
         Args:
             dictionary: Dictionary to be traversed.
@@ -407,7 +391,8 @@ class Command(BaseCommand):
                 raise Exception(f"Conflicting parameter type: {param_name}")
 
     def get_url_from_path(self: Self, path: str, path_params: dict[str, str]) -> str:
-        """Generate a Django path URL from an OpenAPI path.
+        """
+        Generate a Django path URL from an OpenAPI path.
 
         Args:
             path: OpenAPI path string to be used.
@@ -422,7 +407,7 @@ class Command(BaseCommand):
         for token in tokens:
             # get the parameter name inside the braces
             # e.g. gets "id" from "{id}"
-            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
+            extract_parameter = re.compile(r"(?<=\{)(.+)(?=\})")
             parameter_list = extract_parameter.findall(token)
 
             # continue if the current token isn't a path parameter
@@ -433,9 +418,7 @@ class Command(BaseCommand):
             param_name = parameter_list[0]
 
             if param_name not in path_params:
-                raise Exception(
-                    f"Error generating URL: parameter name {param_name} not defined!"
-                )
+                raise Exception(f"Error generating URL: parameter name {param_name} not defined!")
 
             param_type = path_params[param_name]
             url_tokens.append(f"<{param_type}:{param_name}>")
@@ -443,7 +426,8 @@ class Command(BaseCommand):
         return "/".join(url_tokens)  # generate the Django path URL
 
     def get_view_from_path(self: Self, path: str) -> str:
-        """Generate a Django views.py function name from an OpenAPI path.
+        """
+        Generate a Django views.py function name from an OpenAPI path.
 
         Args:
             path: OpenAPI path string to be used.
@@ -454,12 +438,13 @@ class Command(BaseCommand):
         tokens = self.get_tokens_from_uri(path)
 
         # remove braces from the path tokens name to generate the view name
-        view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
+        view_tokens = [re.sub(r"[\{\}]", "", token) for token in tokens]
 
         return "_".join(view_tokens)  # generate the views.py function name
 
     def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
-        """Generate an import statement for the views file, to be used in the URLs file.
+        """
+        Generate an import statement for the views file, to be used in the URLs file.
 
         Args:
             urls_path: Path object for the URLs file.
@@ -472,11 +457,7 @@ class Command(BaseCommand):
         views_parts = list(views_path.parts)
 
         # discard the common parent directories for both paths
-        while (
-            len(urls_parts) > 0
-            and len(views_parts) > 0
-            and urls_parts[0] == views_parts[0]
-        ):
+        while len(urls_parts) > 0 and len(views_parts) > 0 and urls_parts[0] == views_parts[0]:
             urls_parts.pop(0)
             views_parts.pop(0)
 
@@ -485,9 +466,7 @@ class Command(BaseCommand):
             import_statement = f"import {views_path.stem}"
         elif len(urls_parts) < len(views_parts):
             # views is in a deeper directory than urls
-            import_statement = (
-                f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
-            )
+            import_statement = f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
         elif len(urls_parts) >= len(views_parts):
             # urls is in an equal-depth or deeper directory than views
             import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
