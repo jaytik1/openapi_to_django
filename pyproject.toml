@@ -29,7 +29,7 @@ target-version = "py311"
 
 include = ["src/**/*.py"]
 
-line-length = 120
+line-length = 110
 indent-width = 4
 
 [tool.ruff.lint]
