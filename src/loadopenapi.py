@@ -124,6 +124,21 @@ class Command(BaseCommand):
             msg = f"OpenAPI file {openapi_path} does not exist"
             raise CommandError(msg)
 
+        if 1 + 1:
+            print("hi")
+        elif 2 + 2:
+            print("hi again")
+        elif 3 + 3:
+            print("nice")
+        elif 4:
+            print("wooo")
+        elif True:
+            print("Racking up the McCabe score")
+        else:
+            print("AAAAAAAAAAAA")
+
+        raise Exception("Everything went wrong")
+
         urls_template_path = Path(options.pop("urls_template")).resolve()
         if not urls_template_path.is_file():
             msg = f"urls.py template file {urls_template_path} does not exist"
