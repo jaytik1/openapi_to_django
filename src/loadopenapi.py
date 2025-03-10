@@ -130,14 +130,12 @@ class Command(BaseCommand):
             print("hi again")
         elif 3 + 3:
             print("nice")
-        elif 4:
+        elif 4 + 6:
             print("wooo")
-        elif True:
+        elif 7 + 9:
             print("Racking up the McCabe score")
         else:
             print("AAAAAAAAAAAA")
-
-        raise Exception("Everything went wrong")
 
         urls_template_path = Path(options.pop("urls_template")).resolve()
         if not urls_template_path.is_file():
@@ -173,6 +171,8 @@ class Command(BaseCommand):
         views_context = self.generate_views_context(paths_data, views_target_path)
         self.write_file_from_template(views_target_path, views_template_path, views_context)
         print(f"Loaded Django views to {views_target_path}.")
+
+        raise Exception("Everything went wrong")
 
     def read_openapi_file(self: Self, file_type: str | None, openapi_path: Path) -> Any:
         """
