@@ -1,7 +1,14 @@
+"""
+Command line tool to load an OpenAPI document into a Django project.
+
+Create a new Django project and app, then load a given OpenAPI document into the new project.
+"""
+
 import argparse
-from django.core.management import call_command
 from enum import Enum
 from pathlib import Path
+
+from django.core.management import call_command
 
 import loadopenapi
 
@@ -16,11 +23,18 @@ VIEWS_TEMPLATE_PATH = TEMPLATE_DIR / "views.py-tpl"
 
 
 class FileType(Enum):
+    """Store consistent identifiers for OpenAPI file types."""
+
     JSON = "json"
     YAML = "yaml"
 
 
 def main() -> None:
+    """
+    Load a given OpenAPI document into a new Django project and app.
+
+    Parse command line arguments then call the appropriate Django commands.
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument("openapi_file", help="file path of the OpenAPI document")

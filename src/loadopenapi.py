@@ -1,14 +1,16 @@
+"""Django command to load an OpenAPI document into an existing project."""
+
 import json
 import re
-import yaml
 from argparse import ArgumentParser
-from django.core.management.base import BaseCommand, CommandError
-from django.template import Context, Engine
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Self, TypeAlias
 
+import yaml
+from django.core.management.base import BaseCommand, CommandError
+from django.template import Context, Engine
 
 OpenApi: TypeAlias = dict[str, Any]
 
@@ -21,8 +23,22 @@ YAML_EXTENSIONS = [".yaml", ".yml"]
 
 
 class FileType(Enum):
+    """Store consistent identifiers for OpenAPI file types."""
+
     JSON = "json"
     YAML = "yaml"
+
+
+class ParameterError(Exception):
+    """Use for errors relating to OpenAPI parameters."""
+
+    pass
+
+
+class ReferenceObjectError(Exception):
+    """Use for errors relating to OpenAPI reference objects."""
+
+    pass
 
 
 @dataclass
@@ -50,12 +66,15 @@ class DjangoView:
 
 
 class Command(BaseCommand):
+    """Django command to load an OpenAPI document."""
+
     help = "Generate Django code by loading a specified OpenAPI document"
 
     openapi: OpenApi
 
     def add_arguments(self: Self, parser: ArgumentParser) -> None:
-        """Add command line arguments for the command.
+        """
+        Add command line arguments for the command.
 
         Args:
             parser: Argument parser for the command.
@@ -102,19 +121,18 @@ class Command(BaseCommand):
         """
         openapi_path = Path(options.pop("openapi_file")).resolve()
         if not openapi_path.is_file():
-            raise CommandError(f"OpenAPI file {openapi_path} does not exist")
+            msg = f"OpenAPI file {openapi_path} does not exist"
+            raise CommandError(msg)
 
         urls_template_path = Path(options.pop("urls_template")).resolve()
         if not urls_template_path.is_file():
-            raise CommandError(
-                f"urls.py template file {urls_template_path} does not exist"
-            )
+            msg = f"urls.py template file {urls_template_path} does not exist"
+            raise CommandError(msg)
 
         views_template_path = Path(options.pop("views_template")).resolve()
         if not views_template_path.is_file():
-            raise CommandError(
-                f"views.py template file {views_template_path} does not exist"
-            )
+            msg = f"views.py template file {views_template_path} does not exist"
+            raise CommandError(msg)
 
         urls_target_path = Path(options.pop("urls_target")).resolve()
         if not urls_target_path.parent.is_dir():
@@ -128,58 +146,69 @@ class Command(BaseCommand):
 
         file_type = options.pop("file_type")
 
-        if file_type:
-            # set file type to the manually specified one if given
-            openapi_file_type = file_type
-        else:
-            # attempts to identify a file type from the file extension
-            if openapi_path.suffix in JSON_EXTENSIONS:
-                openapi_file_type = FileType.JSON.value
-            elif openapi_path.suffix in YAML_EXTENSIONS:
-                openapi_file_type = FileType.YAML.value
-
-        # attempt to parse the file according to the determined file type
-        if openapi_file_type == FileType.JSON.value:
-            with open(openapi_path, "r") as json_file:
-                openapi = json.load(json_file)
-        elif openapi_file_type == FileType.YAML.value:
-            with open(openapi_path, "r") as yaml_file:
-                openapi = yaml.safe_load(yaml_file)
-        else:
-            raise CommandError(
-                "OpenAPI file type not determined, use --file-type to specify"
-            )
-
-        # resolve all reference objects in the OpenAPI document
-        self.openapi = self.resolve_ref_objects(openapi, openapi)
-
+        self.openapi = self.read_openapi_file(file_type, openapi_path)
         paths_data = self.get_paths_data(self.openapi)
 
         # render and write the URLs file
-        urls_context = self.generate_urls_context(
-            paths_data, urls_target_path, views_target_path
-        )
-        self.write_file_from_template(
-            urls_target_path, urls_template_path, urls_context
-        )
+        urls_context = self.generate_urls_context(paths_data, urls_target_path, views_target_path)
+        self.write_file_from_template(urls_target_path, urls_template_path, urls_context)
         print(f"Loaded Django URL paths to {urls_target_path}.")
 
         # render and write the views file
         views_context = self.generate_views_context(paths_data, views_target_path)
-        self.write_file_from_template(
-            views_target_path, views_template_path, views_context
-        )
+        self.write_file_from_template(views_target_path, views_template_path, views_context)
         print(f"Loaded Django views to {views_target_path}.")
 
+    def read_openapi_file(self: Self, file_type: str | None, openapi_path: Path) -> Any:
+        """
+        Read an OpenAPI document from a given file.
+
+        Determine the file type of the document and parse accordingly,
+        then resolve any reference objects in the OpenAPI document.
+
+        Args:
+            file_type: Optional specifier for the OpenAPI document file type.
+            openapi_path: File path to the OpenAPI document.
+
+        Raises:
+            CommandError: File type of the OpenAPI docuemnt couldn't be determined.
+
+        Returns:
+            OpenAPI document in its Python representation.
+        """
+        if file_type:
+            # set file type to the manually specified one if given
+            openapi_file_type = file_type
+        # attempts to identify a file type from the file extension
+        elif openapi_path.suffix in JSON_EXTENSIONS:
+            openapi_file_type = FileType.JSON.value
+        elif openapi_path.suffix in YAML_EXTENSIONS:
+            openapi_file_type = FileType.YAML.value
+
+        # attempt to parse the file according to the determined file type
+        if openapi_file_type == FileType.JSON.value:
+            with openapi_path.open() as json_file:
+                openapi = json.load(json_file)
+        elif openapi_file_type == FileType.YAML.value:
+            with openapi_path.open() as yaml_file:
+                openapi = yaml.safe_load(yaml_file)
+        else:
+            msg = "OpenAPI file type not determined, use --file-type to specify"
+            raise CommandError(msg)
+
+        # resolve all reference objects in the OpenAPI document
+        return self.resolve_ref_objects(openapi, openapi)
+
     def resolve_ref_objects(self: Self, current: Any, base_dict: dict[str, Any]) -> Any:
-        """Recursively resolve all reference objects (if any) inside a given variable.
+        """
+        Recursively resolve all reference objects (if any) inside a given variable.
 
         Args:
             current: Current variable to be resolved.
             base_dict: Dictionary containing the referenced URIs.
 
         Raises:
-            Exception: Reference object format is invalid or target doesn't exist.
+            ReferenceObjectError: Reference object format is invalid or its target doesn't exist.
 
         Returns:
             The object with all reference objects inside resolved.
@@ -194,34 +223,33 @@ class Command(BaseCommand):
 
         # resolve each dictionary value if the dictionary doesn't contain a ref
         if "$ref" not in current:
-            return {
-                key: self.resolve_ref_objects(val, base_dict)
-                for key, val in current.items()
-            }
+            return {key: self.resolve_ref_objects(val, base_dict) for key, val in current.items()}
 
         # raise an exception if the dictionary contains other data as well as a ref
         if len(current) != 1:
-            raise Exception(
-                f"Dictionary contains other data as well as a reference object: {current}"
-            )
+            msg = f"Dictionary contains other data as well as a reference object: {current}"
+            raise ReferenceObjectError(msg)
 
         ref_uri = current["$ref"]
 
         # references to parts of the same document must start with #
         if ref_uri[0] != "#":
-            raise Exception(f"Reference object URI doesn't start with '#': {current}")
+            msg = f"Reference object URI doesn't start with '#': {current}"
+            raise ReferenceObjectError(msg)
 
         tokens = self.get_tokens_from_uri(ref_uri)
 
         try:
             result = self.traverse_nested_dictionary(base_dict, tokens)
-        except KeyError:
-            raise Exception(f"Reference object location doesn't exist! {current}")
+        except KeyError as e:
+            msg = f"Reference object location doesn't exist! {current}"
+            raise ReferenceObjectError(msg) from e
 
         return self.resolve_ref_objects(result, base_dict)
 
     def get_paths_data(self: Self, openapi: OpenApi) -> list[PathData]:
-        """Get required data for all paths in an OpenAPI document.
+        """
+        Get required data for all paths in an OpenAPI document.
 
         Args:
             openapi: Python representation of an OpenAPI document.
@@ -259,7 +287,8 @@ class Command(BaseCommand):
         urls_target_path: Path,
         views_target_path: Path,
     ) -> Context:
-        """Generate the template context for the Django urls.py file.
+        """
+        Generate the template context for the Django urls.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
@@ -294,7 +323,8 @@ class Command(BaseCommand):
         paths_data: list[PathData],
         views_target_path: Path,
     ) -> Context:
-        """Generate the template context for the Django views.py file.
+        """
+        Generate the template context for the Django views.py file.
 
         Args:
             paths_data: Data about each path in the OpenAPI document.
@@ -318,14 +348,15 @@ class Command(BaseCommand):
     def write_file_from_template(
         self: Self, target_path: Path, template_path: Path, context: Context
     ) -> None:
-        """Render a template and its context and write to a specified file path.
+        """
+        Render a template and its context and write to a specified file path.
 
         Args:
             target_path: Path where the rendered content should be written.
             template_path: Path to the template.
             context: Context to be used by the template.
         """
-        with open(template_path, "r") as template_file:
+        with template_path.open() as template_file:
             template_string = template_file.read()
 
         # convert the template file content to a renderable Template object
@@ -333,13 +364,14 @@ class Command(BaseCommand):
 
         rendered_file = template.render(context)
 
-        with open(target_path, "a") as target_file:
+        with target_path.open("a") as target_file:
             target_file.write(rendered_file)
 
     def get_tokens_from_uri(self: Self, path: str) -> list[str]:
         """
         Split a URI by its slashes (/) to get each of its tokens.
-        (e.g. "/example/{id}" should get split into tokens ["example", "{id}"])
+
+        For example, "/example/{id}" should get split into tokens ["example", "{id}"].
 
         Args:
             path: URI to be split.
@@ -347,14 +379,12 @@ class Command(BaseCommand):
         Returns:
             A list of tokens present in the given URI.
         """
-        split_slash = re.compile("(?<=\/)([^\/]+)")
-        tokens = split_slash.findall(path)
-        return tokens
+        split_slash = re.compile(r"(?<=\/)([^\/]+)")
+        return split_slash.findall(path)
 
-    def traverse_nested_dictionary(
-        self: Self, dictionary: dict, keys: list[str]
-    ) -> dict:
-        """Recursively traverse a nested dictionary using a list of keys.
+    def traverse_nested_dictionary(self: Self, dictionary: dict, keys: list[str]) -> dict:
+        """
+        Recursively traverse a nested dictionary using a list of keys.
 
         Args:
             dictionary: Dictionary to be traversed.
@@ -372,7 +402,8 @@ class Command(BaseCommand):
         key = keys.pop(0)
 
         if key not in dictionary:
-            raise KeyError(f"Key {key} not found in dictionary {dictionary}.")
+            msg = f"Key {key} not found in dictionary {dictionary}."
+            raise KeyError(msg)
 
         return self.traverse_nested_dictionary(dictionary[key], keys)
 
@@ -383,6 +414,7 @@ class Command(BaseCommand):
     ) -> None:
         """
         Parse a list of OpenAPI parameter objects to get their names and types.
+
         Ignores any parameters which aren't path parameters.
 
         Args:
@@ -391,7 +423,7 @@ class Command(BaseCommand):
             which is checked for conflicts and used to store new path parameters.
 
         Raises:
-            Exception: There is a conflicting path parameter (same name but different type).
+            ParameterError: There is a conflicting path parameter (same name but different type).
         """
         for parameter in params_list:
             if parameter["in"] != "path":
@@ -404,13 +436,19 @@ class Command(BaseCommand):
             if param_name not in current_params:
                 current_params[param_name] = param_type
             elif current_params[param_name] != param_type:
-                raise Exception(f"Conflicting parameter type: {param_name}")
+                msg = f"Conflicting parameter type: {param_name}"
+                raise ParameterError(msg)
 
     def get_url_from_path(self: Self, path: str, path_params: dict[str, str]) -> str:
-        """Generate a Django path URL from an OpenAPI path.
+        """
+        Generate a Django path URL from an OpenAPI path.
 
         Args:
             path: OpenAPI path string to be used.
+            path_params: Mapping of a path parameter's name to its type.
+
+        Raises:
+            ParameterError: Parameter name isn't defined.
 
         Returns:
             The Django URL corresponding to the OpenAPI path.
@@ -422,7 +460,7 @@ class Command(BaseCommand):
         for token in tokens:
             # get the parameter name inside the braces
             # e.g. gets "id" from "{id}"
-            extract_parameter = re.compile("(?<=\{)(.+)(?=\})")
+            extract_parameter = re.compile(r"(?<=\{)(.+)(?=\})")
             parameter_list = extract_parameter.findall(token)
 
             # continue if the current token isn't a path parameter
@@ -433,9 +471,8 @@ class Command(BaseCommand):
             param_name = parameter_list[0]
 
             if param_name not in path_params:
-                raise Exception(
-                    f"Error generating URL: parameter name {param_name} not defined!"
-                )
+                msg = f"Error generating URL: parameter name {param_name} not defined!"
+                raise ParameterError(msg)
 
             param_type = path_params[param_name]
             url_tokens.append(f"<{param_type}:{param_name}>")
@@ -443,7 +480,8 @@ class Command(BaseCommand):
         return "/".join(url_tokens)  # generate the Django path URL
 
     def get_view_from_path(self: Self, path: str) -> str:
-        """Generate a Django views.py function name from an OpenAPI path.
+        """
+        Generate a Django views.py function name from an OpenAPI path.
 
         Args:
             path: OpenAPI path string to be used.
@@ -454,12 +492,13 @@ class Command(BaseCommand):
         tokens = self.get_tokens_from_uri(path)
 
         # remove braces from the path tokens name to generate the view name
-        view_tokens = [re.sub("[\{\}]", "", token) for token in tokens]
+        view_tokens = [re.sub(r"[\{\}]", "", token) for token in tokens]
 
         return "_".join(view_tokens)  # generate the views.py function name
 
     def generate_views_import(self: Self, urls_path: Path, views_path: Path) -> str:
-        """Generate an import statement for the views file, to be used in the URLs file.
+        """
+        Generate an import statement for the views file, to be used in the URLs file.
 
         Args:
             urls_path: Path object for the URLs file.
@@ -472,11 +511,7 @@ class Command(BaseCommand):
         views_parts = list(views_path.parts)
 
         # discard the common parent directories for both paths
-        while (
-            len(urls_parts) > 0
-            and len(views_parts) > 0
-            and urls_parts[0] == views_parts[0]
-        ):
+        while len(urls_parts) > 0 and len(views_parts) > 0 and urls_parts[0] == views_parts[0]:
             urls_parts.pop(0)
             views_parts.pop(0)
 
@@ -485,9 +520,7 @@ class Command(BaseCommand):
             import_statement = f"import {views_path.stem}"
         elif len(urls_parts) < len(views_parts):
             # views is in a deeper directory than urls
-            import_statement = (
-                f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
-            )
+            import_statement = f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
         elif len(urls_parts) >= len(views_parts):
             # urls is in an equal-depth or deeper directory than views
             import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
