@@ -18,7 +18,7 @@ jobs:
         python-version: "3.11"
     - name: Check type hints with mypy
       run: |
-        pip install mypy
+        pip install mypy types-PyYAML
         mypy
     - name: Lint with Ruff
       run: |
