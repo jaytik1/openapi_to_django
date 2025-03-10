@@ -26,8 +26,6 @@ pip install -r requirements.txt
 
 This repository includes a helper script `src/main.py`, used for generating a new Django project and loading an OpenAPI document in one go.
 
-The commands below give some examples of how this script can be used:
-
 ```shell
 # example: view all arguments for the script (START HERE)
 python3 main.py --help
@@ -43,9 +41,7 @@ python3 main.py openapidoc --file-type yaml \
 
 ## Using in an Existing Django Project
 
-The `loadopenapi.py` script be installed as a command in an existing Django project (see the FAQs below for instructions).
-
-The commands below demonstrate how `loadopenapi` can be used:
+The `src/loadopenapi.py` script be installed in an existing Django project as the command `loadopenapi` (see the FAQs below for instructions).
 
 ```shell
 # example: view all arguments for the script (START HERE)
@@ -63,9 +59,9 @@ python3 manage.py loadopenapi openapi.json \
 
 ## Features
 
-- Generates content from an OpenAPI document for both new and existing Django projects
-- Generates Django paths in a `urls.py` file for each path in the given OpenAPI document
-- Generates corresponding functions in a `views.py` file for each OpenAPI path
+- Generates code from an OpenAPI document for both new and existing Django projects
+  - Generates Django paths in a `urls.py` file for each path in the given OpenAPI document
+  - Generates corresponding functions in a `views.py` file for each OpenAPI path
 - Example OpenAPI documents are provided (`openapi/example.yaml` and `openapi/example.json`)
   - Designed to cover a range of OpenAPI 3.1 features to demonstrate the project
   - Contains examples of endpoints supporting GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH and TRACE operations
@@ -85,14 +81,12 @@ python3 manage.py loadopenapi openapi.json \
 
 - Template files have the extension `.py-tpl` and can be found in the `templates/` folder
 - They are used by Django to render files in a specific way, and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
-- As well as this program, they are used by Django's built-in `startproject` and `startapp` commands
+  - As well as this program, they are used by Django's built-in `startproject` and `startapp` commands
 - The template files for this project are used to generate a Django project with `main.py` and generate files with the `loadopenapi` command
 - `urls.py-tpl` and `views.py-tpl` are the key files, as they determine how OpenAPI paths are converted to Django paths and view functions
 - If you don't like how they render, you can create your own template files and use them with `loadopenapi`'s `--urls-template` and `--views-template` arguments!
 
 ## Licensing
 
-- This repository is distributed under the MIT license
-  - See the `LICENSE` file
-- As elements of the Django source code have been copied and modified (including project and app templates, as well as some template rendering), the Django 5.1.5 BSD-3 Clause LICENSE file is also included
-  - See the `LICENSE_DJANGO` file
+- `LICENSE`: This repository is distributed under the MIT license
+- `LICENSE_DJANGO`: As elements of the Django source code have been copied and modified (including project and app templates, as well as some template rendering), the Django 5.1.5 BSD 3-Clause License file is also included
