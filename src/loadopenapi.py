@@ -159,7 +159,7 @@ class Command(BaseCommand):
         self.write_file_from_template(views_target_path, views_template_path, views_context)
         print(f"Loaded Django views to {views_target_path}.")
 
-    def read_openapi_file(self: Self, file_type: str | None, openapi_path: Path) -> OpenApi:
+    def read_openapi_file(self: Self, file_type: str | None, openapi_path: Path) -> Any:
         """
         Read an OpenAPI document from a given file.
 
