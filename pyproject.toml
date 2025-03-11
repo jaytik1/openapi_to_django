@@ -1,3 +1,32 @@
+[project]
+name = "openapi-to-django"
+version = "0.1.0"
+description = "Generate Django code from OpenAPI documents."
+authors = [
+    { name = "jaytik1" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+keywords = [ "django", "openapi" ]
+classifiers = [
+    "Topic :: Software Development :: Code Generators",
+    "Framework :: Django"
+]
+
+requires-python = ">=3.11"
+dependencies = [
+]
+
+[project.urls]
+repository = "https://github.com/jaytik1/openapi-to-django"
+
+[build-system]
+requires = [ "poetry-core>=2.0.0,<3.0.0" ]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{ include = "openapi-to-django", from = "src" }]
+
 [tool.mypy]
 python_version = "3.11"
 packages = "src"
