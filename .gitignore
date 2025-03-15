@@ -1,7 +1,7 @@
 local/
 .vscode/
-openapi_django/
 devlog
+.ruff_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
