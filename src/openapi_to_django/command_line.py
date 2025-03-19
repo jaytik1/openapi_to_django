@@ -8,9 +8,8 @@ import argparse
 from enum import Enum
 from pathlib import Path
 
+import openapi_to_django.loadopenapi
 from django.core.management import call_command
-
-import loadopenapi
 
 DEFAULT_PROJECT_NAME = "openapi_django"
 DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
