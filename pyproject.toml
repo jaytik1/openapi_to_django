@@ -1,5 +1,5 @@
 [project]
-name = "openapi-to-django"
+name = "openapi_to_django"
 version = "0.1.0"
 description = "Generate Django code from OpenAPI documents."
 authors = [
@@ -25,14 +25,14 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/jaytik1/openapi-to-django"
+repository = "https://github.com/jaytik1/openapi_to_django"
 
 [build-system]
 requires = [ "poetry-core>=2.0.0,<3.0.0" ]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-packages = [{ include = "openapi-to-django", from = "src" }]
+packages = [{ include = "openapi_to_django", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
