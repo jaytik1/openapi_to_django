@@ -18,7 +18,7 @@ Sorry about the weird spacing throughout, it seems to be the only way it can ren
 
 urlpatterns = []{% endif %}
 
-# # # OpenAPI to Django Endpoints # # #
+# === OpenAPI to Django Endpoints === #
 
 openapi_endpoints = [{% for path in paths %}
     path("{{ path.url }}", {{ views_name }}.{{ path.view_name }}),{% endfor %}

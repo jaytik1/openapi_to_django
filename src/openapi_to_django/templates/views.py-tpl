@@ -19,7 +19,7 @@ from django.http import HttpResponse
 {% endif %}
 {% endspaceless %}
 
-# # # OpenAPI to Django Views # # #
+# === OpenAPI to Django Views === #
 {% for view in views %}
 
 def {{ view.view_name }}(request{% for name, type in view.params.items %}, {{ name }}: {{ type }}{% endfor %}):
