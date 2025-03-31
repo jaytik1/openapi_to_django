@@ -3,7 +3,6 @@
 import json
 import re
 from argparse import ArgumentParser
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Self, TypeAlias
@@ -12,6 +11,7 @@ import yaml
 from django.core.management.base import BaseCommand, CommandError
 from django.template import Context, Engine
 
+from openapi_to_django.dataclasses import DjangoPath, DjangoView, PathData
 from openapi_to_django.exceptions import ParameterError, ReferenceObjectError
 
 OpenApi: TypeAlias = dict[str, Any]
@@ -29,30 +29,6 @@ class FileType(Enum):
 
     JSON = "json"
     YAML = "yaml"
-
-
-@dataclass
-class PathData:
-    """Data about an OpenAPI path."""
-
-    openapi_path: str  # path URL as stored in the OpenAPI document
-    path_params: dict[str, str]  # dict of path parameters and their Django types
-
-
-@dataclass
-class DjangoPath:
-    """Data required to create a Django path in urls.py."""
-
-    url: str  # URL of the path, including any path parameters
-    view_name: str  # name of the path's corresponding function in views.py
-
-
-@dataclass
-class DjangoView:
-    """Data required to create a Django view function in views.py."""
-
-    view_name: str  # name of the function in views.py
-    params: dict[str, str]  # dict of view parameters and their types
 
 
 class Command(BaseCommand):
