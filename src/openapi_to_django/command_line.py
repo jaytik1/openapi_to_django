@@ -10,12 +10,11 @@ from pathlib import Path
 
 from django.core.management import call_command
 
-import openapi_to_django.loadopenapi
+from openapi_to_django import loadopenapi
 
 DEFAULT_PROJECT_NAME = "openapi_django"
 DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
 
-# TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 PROJECT_TEMPLATE_DIR = TEMPLATE_DIR / "project_template"
 APP_TEMPLATE_DIR = TEMPLATE_DIR / "app_template"
@@ -81,7 +80,7 @@ def main() -> None:
 
     # automatically load the OpenAPI document
     print(f"Loading OpenAPI document {args.openapi_file}...")
-    load_openapi_command = openapi_to_django.loadopenapi.Command()
+    load_openapi_command = loadopenapi.Command()
     call_command(
         load_openapi_command,
         args.openapi_file,

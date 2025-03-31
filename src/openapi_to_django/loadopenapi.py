@@ -12,6 +12,8 @@ import yaml
 from django.core.management.base import BaseCommand, CommandError
 from django.template import Context, Engine
 
+from openapi_to_django.exceptions import ParameterError, ReferenceObjectError
+
 OpenApi: TypeAlias = dict[str, Any]
 
 # maps the OpenAPI path parameter types to Django path parameter types
@@ -27,18 +29,6 @@ class FileType(Enum):
 
     JSON = "json"
     YAML = "yaml"
-
-
-class ParameterError(Exception):
-    """Use for errors relating to OpenAPI parameters."""
-
-    pass
-
-
-class ReferenceObjectError(Exception):
-    """Use for errors relating to OpenAPI reference objects."""
-
-    pass
 
 
 @dataclass
