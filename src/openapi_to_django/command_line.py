@@ -10,7 +10,7 @@ from pathlib import Path
 from django.core.management import call_command
 
 from openapi_to_django import loadopenapi
-from openapi_to_django.constants import FileType
+from openapi_to_django.definitions import FileType
 
 DEFAULT_PROJECT_NAME = "openapi_django"
 DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
