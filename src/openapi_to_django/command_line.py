@@ -5,28 +5,22 @@ Create a new Django project and app, then load a given OpenAPI document into the
 """
 
 import argparse
-from enum import Enum
 from pathlib import Path
 
 from django.core.management import call_command
 
 from openapi_to_django import loadopenapi
+from openapi_to_django.constants import FileType
 
 DEFAULT_PROJECT_NAME = "openapi_django"
 DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
 
+# paths to default template files and directories
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 PROJECT_TEMPLATE_DIR = TEMPLATE_DIR / "project_template"
 APP_TEMPLATE_DIR = TEMPLATE_DIR / "app_template"
 URLS_TEMPLATE_PATH = TEMPLATE_DIR / "urls.py-tpl"
 VIEWS_TEMPLATE_PATH = TEMPLATE_DIR / "views.py-tpl"
-
-
-class FileType(Enum):
-    """Store consistent identifiers for OpenAPI file types."""
-
-    JSON = "json"
-    YAML = "yaml"
 
 
 def main() -> None:
