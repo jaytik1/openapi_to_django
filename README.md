@@ -1,6 +1,6 @@
 # OpenAPI to Django
 
-Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-85ea2d)](https://spec.openapis.org/oas/v3.1.1.html) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit).
+Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-85ea2d)](https://spec.openapis.org/oas/v3.1.1.html)[![Django 5.1.5](https://img.shields.io/badge/Django-5.1.5-0c4b33)]([https://spec.openapis.org/oas/v3.1.1.html](https://docs.djangoproject.com/en/5.1/releases/5.1.5/)) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit). **Note that this branch is currently a pre-release and shouldn't be treated as stable.**
 
 ## Overview
 
