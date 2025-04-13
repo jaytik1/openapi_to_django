@@ -1,9 +1,6 @@
-"""Definitions of constants, types and enums used by OpenAPI to Django."""
+"""Definitions of constants and enums used by OpenAPI to Django."""
 
 from enum import Enum
-from typing import Any, TypeAlias
-
-OpenApi: TypeAlias = dict[str, Any]
 
 # maps the OpenAPI path parameter types to Django path parameter types
 OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
