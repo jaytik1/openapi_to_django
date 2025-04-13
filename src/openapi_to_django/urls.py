@@ -8,8 +8,8 @@ from django.template import Context
 
 from openapi_to_django.exceptions import ParameterError
 from openapi_to_django.openapi import PathData
-from openapi_to_django.utils import get_tokens_from_uri
-from openapi_to_django.views import generate_views_import, get_view_from_path
+from openapi_to_django.utils import generate_relative_import, get_tokens_from_uri
+from openapi_to_django.views import get_view_from_path
 
 
 @dataclass
@@ -44,7 +44,7 @@ def generate_urls_context(
         view_name = get_view_from_path(path_data.openapi_path)
         paths.append(DjangoPath(url, view_name))
 
-    views_import = generate_views_import(urls_target_path, views_target_path)
+    views_import = generate_relative_import(urls_target_path, views_target_path)
 
     return Context(
         {

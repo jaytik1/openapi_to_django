@@ -61,35 +61,3 @@ def get_view_from_path(path: str) -> str:
     view_tokens = [re.sub(r"[\{\}]", "", token) for token in tokens]
 
     return "_".join(view_tokens)  # generate the views.py function name
-
-
-def generate_views_import(urls_path: Path, views_path: Path) -> str:
-    """
-    Generate an import statement for the views file, to be used in the URLs file.
-
-    Args:
-        urls_path: Path object for the URLs file.
-        views_path: Path object for the views file.
-
-    Returns:
-        Import statement for the views file relative to the URLs file.
-    """
-    urls_parts = list(urls_path.parts)
-    views_parts = list(views_path.parts)
-
-    # discard the common parent directories for both paths
-    while len(urls_parts) > 0 and len(views_parts) > 0 and urls_parts[0] == views_parts[0]:
-        urls_parts.pop(0)
-        views_parts.pop(0)
-
-    if len(urls_parts) == 1 and len(views_parts) == 1:
-        # urls and views are in the same directory
-        import_statement = f"import {views_path.stem}"
-    elif len(urls_parts) < len(views_parts):
-        # views is in a deeper directory than urls
-        import_statement = f"from {'.'.join(views_parts[:-1])} import {views_path.stem}"
-    elif len(urls_parts) >= len(views_parts):
-        # urls is in an equal-depth or deeper directory than views
-        import_statement = f"from {views_path.parent.stem} import {views_path.stem}"
-
-    return import_statement
