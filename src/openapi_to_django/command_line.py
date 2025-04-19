@@ -1,26 +1,15 @@
 """
-Command line tool to load an OpenAPI document into a Django project.
+Command line tool to load an OpenAPI document into a new Django project.
 
 Create a new Django project and app, then load a given OpenAPI document into the new project.
 """
 
-import argparse
 from pathlib import Path
 
 from django.core.management import call_command
 
 from openapi_to_django import loadopenapi
-from openapi_to_django.definitions import FileType
-
-DEFAULT_PROJECT_NAME = "openapi_django"
-DEFAULT_APP_NAME = DEFAULT_PROJECT_NAME + "_app"
-
-# paths to default template files and directories
-TEMPLATE_DIR = Path(__file__).parent / "templates"
-PROJECT_TEMPLATE_DIR = TEMPLATE_DIR / "project_template"
-APP_TEMPLATE_DIR = TEMPLATE_DIR / "app_template"
-URLS_TEMPLATE_PATH = TEMPLATE_DIR / "urls.py-tpl"
-VIEWS_TEMPLATE_PATH = TEMPLATE_DIR / "views.py-tpl"
+from openapi_to_django.argument_parser import CommandLineArgumentParser
 
 
 def main() -> None:
@@ -29,35 +18,12 @@ def main() -> None:
 
     Parse command line arguments then call the appropriate Django commands.
     """
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("openapi_file", help="file path of the OpenAPI document")
-    parser.add_argument(
-        "-t",
-        "--file-type",
-        help="file type of the OpenAPI document (not required, the program will attempt to estimate the file type if not provided)",
-        choices=[FileType.JSON.value, FileType.YAML.value],
-        required=False,
-    )
-
-    # arguments for setting up Django
-    parser.add_argument(
-        "-p",
-        "--project-name",
-        help="name of the Django project being created",
-        default=DEFAULT_PROJECT_NAME,
-    )
-    parser.add_argument(
-        "-a",
-        "--app-name",
-        help="name of the Django app being created",
-        default=DEFAULT_APP_NAME,
-    )
-
+    # create an instance of the general OpenAPI to Django argument parser
+    parser = CommandLineArgumentParser()
     args = parser.parse_args()
 
     # attempt to create a new Django project
-    call_command("startproject", args.project_name, template=str(PROJECT_TEMPLATE_DIR))
+    call_command("startproject", args.project_name, template=str(args.project_template))
     print(f"Created Django project {args.project_name}.")
 
     # attempt to create a new app in the new Django project
@@ -68,7 +34,7 @@ def main() -> None:
         "startapp",
         args.app_name,
         app_directory,
-        template=str(APP_TEMPLATE_DIR),
+        template=str(args.app_template),
     )
     print(f"Created Django app {args.app_name} in directory {app_directory}.")
 
@@ -79,8 +45,8 @@ def main() -> None:
         load_openapi_command,
         args.openapi_file,
         file_type=args.file_type,
-        urls_template=URLS_TEMPLATE_PATH,
-        views_template=VIEWS_TEMPLATE_PATH,
+        urls_template=args.urls_template,
+        views_template=args.views_template,
         urls_target=Path(args.project_name, args.project_name, "urls.py"),
         views_target=app_directory / "views.py",
     )
