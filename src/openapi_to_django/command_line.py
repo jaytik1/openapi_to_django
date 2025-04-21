@@ -18,7 +18,6 @@ def main() -> None:
 
     Parse command line arguments then call the appropriate Django commands.
     """
-    # create an instance of the general OpenAPI to Django argument parser
     parser = CommandLineArgumentParser()
     args = parser.parse_args()
 
@@ -38,7 +37,7 @@ def main() -> None:
     )
     print(f"Created Django app {args.app_name} in directory {app_directory}.")
 
-    # automatically load the OpenAPI document
+    # load the OpenAPI document
     print(f"Loading OpenAPI document {args.openapi_file}...")
     load_openapi_command = loadopenapi.Command()
     call_command(

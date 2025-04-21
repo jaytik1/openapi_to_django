@@ -2,12 +2,12 @@
 
 
 class ParameterError(Exception):
-    """Use for errors relating to OpenAPI parameters."""
+    """Error related to OpenAPI parameters."""
 
     pass
 
 
 class ReferenceObjectError(Exception):
-    """Use for errors relating to OpenAPI reference objects."""
+    """Error related to OpenAPI reference objects."""
 
     pass
