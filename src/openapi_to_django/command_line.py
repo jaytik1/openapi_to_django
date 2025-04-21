@@ -9,7 +9,7 @@ from pathlib import Path
 from django.core.management import call_command
 
 from openapi_to_django import loadopenapi
-from openapi_to_django.argument_parser import CommandLineArgumentParser
+from openapi_to_django.argument_parsers import CommandLineArgumentParser
 
 
 def main() -> None:

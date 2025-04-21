@@ -1,6 +1,6 @@
 """Argument parsers used by the OpenAPI to Django tools."""
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Self
 
@@ -60,6 +60,45 @@ class BaseArgumentParser(ArgumentParser):
             help="file where the generated Django view functions should be written",
             default="views.py",
         )
+
+    def parse_args(self: Self, **kwargs: Any) -> Namespace:  # type: ignore
+        """
+        Parse arguments and perform necessary validation checks.
+
+        Args:
+            **kwargs: Keyword arguments to be passed to the overridden method in ArgumentParser.
+
+        Returns:
+            Namespace object containing the parsed and validated arguments.
+        """
+        parsed_args: Namespace = super().parse_args(**kwargs)
+
+        parsed_args.openapi_file = Path(parsed_args.openapi_file).resolve()
+        if not parsed_args.openapi_file.is_file():
+            msg = f"OpenAPI file {parsed_args.openapi_file} does not exist"
+            self.error(msg)
+
+        parsed_args.urls_template = Path(parsed_args.urls_template).resolve()
+        if not parsed_args.urls_template.is_file():
+            msg = f"urls.py template file {parsed_args.urls_template} does not exist"
+            self.error(msg)
+
+        parsed_args.views_template = Path(parsed_args.views_template).resolve()
+        if not parsed_args.views_template.is_file():
+            msg = f"views.py template file {parsed_args.views_template} does not exist"
+            self.error(msg)
+
+        parsed_args.urls_target = Path(parsed_args.urls_target).resolve()
+        if not parsed_args.urls_target.parent.is_dir():
+            # create directory for the URLs target if it doesn't exist
+            parsed_args.urls_target.parent.mkdir(parents=True)
+
+        parsed_args.views_target = Path(parsed_args.views_target).resolve()
+        if not parsed_args.views_target.parent.is_dir():
+            # create directory for the views target if it doesn't exist
+            parsed_args.views_target.parent.mkdir(parents=True)
+
+        return parsed_args
 
 
 class CommandLineArgumentParser(BaseArgumentParser):

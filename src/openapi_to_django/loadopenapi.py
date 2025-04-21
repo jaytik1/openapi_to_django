@@ -1,12 +1,11 @@
 """Django command to load an OpenAPI document into an existing project."""
 
 from argparse import ArgumentParser
-from pathlib import Path
 from typing import Any, Self
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
-from openapi_to_django.argument_parser import BaseArgumentParser
+from openapi_to_django.argument_parsers import BaseArgumentParser
 from openapi_to_django.openapi import OpenApi, get_paths_data, read_openapi_file
 from openapi_to_django.urls import generate_urls_context
 from openapi_to_django.utils import write_file_from_template
@@ -44,31 +43,12 @@ class Command(BaseCommand):
         Raises:
             CommandError: Something went wrong when running the command.
         """
-        openapi_path = Path(options.pop("openapi_file")).resolve()
-        if not openapi_path.is_file():
-            msg = f"OpenAPI file {openapi_path} does not exist"
-            raise CommandError(msg)
-
-        urls_template_path = Path(options.pop("urls_template")).resolve()
-        if not urls_template_path.is_file():
-            msg = f"urls.py template file {urls_template_path} does not exist"
-            raise CommandError(msg)
-
-        views_template_path = Path(options.pop("views_template")).resolve()
-        if not views_template_path.is_file():
-            msg = f"views.py template file {views_template_path} does not exist"
-            raise CommandError(msg)
-
-        urls_target_path = Path(options.pop("urls_target")).resolve()
-        if not urls_target_path.parent.is_dir():
-            # create directory for the URLs target if it doesn't exist
-            urls_target_path.parent.mkdir(parents=True)
-
-        views_target_path = Path(options.pop("views_target")).resolve()
-        if not views_target_path.parent.is_dir():
-            # create directory for the views target if it doesn't exist
-            views_target_path.parent.mkdir(parents=True)
-
+        # obtain the required command line arguments
+        openapi_path = options.pop("openapi_file")
+        urls_template_path = options.pop("urls_template")
+        views_template_path = options.pop("views_template")
+        urls_target_path = options.pop("urls_target")
+        views_target_path = options.pop("views_target")
         file_type = options.pop("file_type")
 
         self.openapi = read_openapi_file(file_type, openapi_path)
