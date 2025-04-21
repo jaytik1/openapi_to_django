@@ -3,7 +3,7 @@ info:
   title: OpenAPI to Django Example
   description: >-
     This is an example document for the [OpenAPI to
-    Django](https://github.com/jaytik1/openapi-to-django) project, used to
+    Django](https://github.com/jaytik1/openapi_to_django) project, used to
     convert OpenAPI specifications into Django skeleton projects.
   license:
     name: MIT License
@@ -11,7 +11,7 @@ info:
   version: 1.0.0
 externalDocs:
   description: OpenAPI to Django GitHub repository
-  url: https://github.com/jaytik1/openapi-to-django
+  url: https://github.com/jaytik1/openapi_to_django
 servers:
   - url: https://example.com/
 tags:

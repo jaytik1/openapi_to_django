@@ -88,5 +88,6 @@ python3 manage.py loadopenapi openapi.json \
 
 ## Licensing
 
-- `LICENSE`: This repository is distributed under the MIT license
-- `LICENSE_DJANGO`: As elements of the Django source code have been copied and modified (including project and app templates, as well as some template rendering), the Django 5.1.5 BSD 3-Clause License file is also included
+- Licenses for the project can be found in `LICENSES/`
+- `LICENSE`: This repository is distributed under the [MIT License](https://opensource.org/license/mit)
+- `LICENSE_DJANGO`: As elements of the Django source code have been copied and modified (including project and app templates, as well as some template rendering), the Django BSD 3-Clause License file is also included

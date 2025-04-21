@@ -15,13 +15,13 @@ Sorry about the weird spacing throughout, it seems to be the only way it can ren
 
 {% comment %} Include imports if not writing to an existing urls.py file. {% endcomment %}
 {% if not views_exists %}
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 {% endif %}
 {% endspaceless %}
 
-# # # OpenAPI to Django Views # # #
+# === OpenAPI to Django Views === #
 {% for view in views %}
 
-def {{ view.view_name }}(request{% for name, type in view.params.items %}, {{ name }}: {{ type }}{% endfor %}):
+def {{ view.view_name }}(request: HttpRequest{% for name, type in view.params.items %}, {{ name }}: {{ type }}{% endfor %}) -> HttpResponse:
     return HttpResponse(status=200)
 {% endfor %}
