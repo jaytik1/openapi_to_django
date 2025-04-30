@@ -39,6 +39,9 @@ def get_tokens_from_uri(path: str) -> list[str]:
     Returns:
         A list of tokens present in the given URI.
     """
+    if path[0] != "/":
+        return []
+
     split_slash = re.compile(r"(?<=\/)([^\/]+)")
     return split_slash.findall(path)
 
