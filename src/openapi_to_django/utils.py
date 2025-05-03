@@ -56,7 +56,14 @@ def generate_relative_import(importing_path: Path, imported_path: Path) -> str:
 
     Returns:
         Import statement for the imported file relative to the importing file.
+
+    Raises:
+        ValueError if the importing and imported paths are the same.
     """
+    if importing_path.resolve().absolute() == imported_path.resolve().absolute():
+        msg = "Importing and imported paths are the same"
+        raise ValueError(msg)
+
     importing_parts = list(importing_path.parts)
     imported_parts = list(imported_path.parts)
 
