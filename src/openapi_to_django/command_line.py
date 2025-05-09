@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Any, Self
 
 from django.core.management import call_command
+from django.template import Engine
 
 from openapi_to_django.definitions import FileType
 from openapi_to_django.openapi import get_paths_data, read_openapi_file
 from openapi_to_django.urls import generate_urls_context
-from openapi_to_django.utils import write_file_from_template
 from openapi_to_django.views import generate_views_context
 
 
@@ -157,12 +157,24 @@ def main() -> None:
 
     # render and write the URLs file
     urls_context = generate_urls_context(paths_data, args.urls_target, args.views_target)
-    write_file_from_template(args.urls_target, args.urls_template, urls_context)
+
+    with args.urls_template.open() as urls_template_file:
+        urls_template = Engine().from_string(urls_template_file.read())
+
+    with args.urls_target.open("a") as target_file:
+        target_file.write(urls_template.render(urls_context))
+
     print(f"Loaded Django URL paths to {args.urls_target}.")
 
     # render and write the views file
     views_context = generate_views_context(paths_data, args.views_target)
-    write_file_from_template(args.views_target, args.views_template, views_context)
+
+    with args.views_template.open() as views_template_file:
+        views_template = Engine().from_string(views_template_file.read())
+
+    with args.views_target.open("a") as target_file:
+        target_file.write(views_template.render(views_context))
+
     print(f"Loaded Django views to {args.views_target}.")
 
     print("OpenAPI to Django setup complete.")
