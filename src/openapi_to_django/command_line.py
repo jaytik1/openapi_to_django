@@ -8,8 +8,11 @@ from pathlib import Path
 
 from django.core.management import call_command
 
-from openapi_to_django import loadopenapi
 from openapi_to_django.argument_parsers import CommandLineArgumentParser
+from openapi_to_django.openapi import get_paths_data, read_openapi_file
+from openapi_to_django.urls import generate_urls_context
+from openapi_to_django.utils import write_file_from_template
+from openapi_to_django.views import generate_views_context
 
 
 def main() -> None:
@@ -39,16 +42,22 @@ def main() -> None:
 
     # load the OpenAPI document
     print(f"Loading OpenAPI document {args.openapi_file}...")
-    load_openapi_command = loadopenapi.Command()
-    call_command(
-        load_openapi_command,
-        args.openapi_file,
-        file_type=args.file_type,
-        urls_template=args.urls_template,
-        views_template=args.views_template,
-        urls_target=Path(args.project_name, args.project_name, "urls.py"),
-        views_target=app_directory / "views.py",
-    )
+
+    urls_target = (Path(args.project_name, args.project_name, "urls.py"),)
+    views_target = app_directory / "views.py"
+
+    openapi = read_openapi_file(args.file_type, args.openapi_file)
+    paths_data = get_paths_data(openapi)
+
+    # render and write the URLs file
+    urls_context = generate_urls_context(paths_data, urls_target, views_target)
+    write_file_from_template(urls_target, args.urls_template, urls_context)
+    print(f"Loaded Django URL paths to {urls_target}.")
+
+    # render and write the views file
+    views_context = generate_views_context(paths_data, views_target)
+    write_file_from_template(views_target, args.views_template, views_context)
+    print(f"Loaded Django views to {views_target}.")
 
     print("OpenAPI to Django setup complete.")
 
