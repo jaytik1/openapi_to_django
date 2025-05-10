@@ -1,3 +1,5 @@
+"""Unit test classes for utils.py functions."""
+
 from pathlib import Path
 
 import pytest
@@ -18,23 +20,23 @@ class TestGetTokensFromUri:
         assert utils.get_tokens_from_uri("/example/page") == ["example", "page"]
 
     def test_get_parameter_start(self):
-        assert (utils.get_tokens_from_uri("/{id}/example")) == ["{id}", "example"]
+        assert utils.get_tokens_from_uri("/{id}/example") == ["{id}", "example"]
 
     def test_get_parameter_middle(self):
-        assert (utils.get_tokens_from_uri("/example/{id}/profile")) == ["example", "{id}", "profile"]
+        assert utils.get_tokens_from_uri("/example/{id}/profile") == ["example", "{id}", "profile"]
 
     def test_get_parameter_end(self):
-        assert (utils.get_tokens_from_uri("/example/{id}")) == ["example", "{id}"]
+        assert utils.get_tokens_from_uri("/example/{id}") == ["example", "{id}"]
 
     def test_contiguous_slashes(self):
         # TODO consider alternative behaviours
-        assert (utils.get_tokens_from_uri("///example//page")) == ["example", "page"]
+        assert utils.get_tokens_from_uri("///example//page") == ["example", "page"]
 
     def test_no_slashes(self):
-        assert (utils.get_tokens_from_uri("example")) == []
+        assert utils.get_tokens_from_uri("example") == []
 
     def test_no_leading_slash(self):
-        assert (utils.get_tokens_from_uri("example/page")) == []
+        assert utils.get_tokens_from_uri("example/page") == []
 
 
 class TestGenerateRelativeImport:
