@@ -4,15 +4,17 @@ Command line tool to load an OpenAPI document into a new Django project.
 Create a new Django project and app, then load a given OpenAPI document into the new project.
 """
 
+import json
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Self
 
+import yaml
 from django.core.management import call_command
 from django.template import Engine
 
 from openapi_to_django.definitions import FileType
-from openapi_to_django.openapi import get_paths_data, read_openapi_file
+from openapi_to_django.openapi import get_paths_data, resolve_ref_objects
 from openapi_to_django.urls import generate_urls_context
 from openapi_to_django.views import generate_views_context
 
@@ -159,7 +161,18 @@ def main() -> None:
     # load the OpenAPI document
     print(f"Loading OpenAPI document {args.openapi_file}...")
 
-    openapi = read_openapi_file(args.file_type, args.openapi_file)
+    # parse the OpenAPI file according to the determined file type
+    if args.file_type == FileType.JSON.value:
+        with args.openapi_file.open() as json_file:
+            openapi = json.load(json_file)
+    elif args.file_type == FileType.YAML.value:
+        with args.openapi_file.open() as yaml_file:
+            openapi = yaml.safe_load(yaml_file)
+    else:
+        msg = "OpenAPI file type not determined, use --file-type to specify"
+        raise ValueError(msg)
+
+    openapi = resolve_ref_objects(openapi, openapi)
     paths_data = get_paths_data(openapi)
 
     # render and write the URLs file
