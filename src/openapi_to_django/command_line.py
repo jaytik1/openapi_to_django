@@ -113,7 +113,14 @@ class CustomArgumentParser(ArgumentParser):
             msg = f"views.py template file {parsed_args.views_template} does not exist"
             self.error(msg)
 
-        # default target values are set here as they require the values of other arguments
+        # default values are set here as they require the values of other arguments
+
+        if parsed_args.file_type is None:
+            # attempts to identify a file type from the OpenAPI file extension
+            if parsed_args.openapi_file.suffix == ".json":
+                parsed_args.file_type = FileType.JSON.value
+            elif parsed_args.openapi_file.suffix in [".yaml", ".yml"]:
+                parsed_args.file_type = FileType.YAML.value
 
         if parsed_args.urls_target is None:
             parsed_args.urls_target = Path(parsed_args.project_name, parsed_args.project_name, "urls.py")

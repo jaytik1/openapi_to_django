@@ -8,17 +8,14 @@ from typing import Any, TypeAlias
 import yaml
 from django.core.management.base import CommandError
 
-from openapi_to_django.definitions import (
-    DEFAULT_DJANGO_TYPE,
-    JSON_EXTENSIONS,
-    OPENAPI_DJANGO_TYPE_MAP,
-    YAML_EXTENSIONS,
-    FileType,
-)
+from openapi_to_django.definitions import FileType
 from openapi_to_django.exceptions import ParameterError, ReferenceObjectError
 from openapi_to_django.utils import get_tokens_from_uri
 
 OpenApi: TypeAlias = dict[str, Any]
+
+OPENAPI_DJANGO_TYPE_MAP = {"number": "int", "integer": "int", "string": "str"}
+DEFAULT_DJANGO_TYPE = "str"
 
 
 @dataclass
@@ -46,20 +43,11 @@ def read_openapi_file(file_type: str | None, openapi_path: Path) -> Any:
     Returns:
         OpenAPI document in its Python representation.
     """
-    if file_type:
-        # set file type to the manually specified one if given
-        openapi_file_type = file_type
-    # attempts to identify a file type from the file extension
-    elif openapi_path.suffix in JSON_EXTENSIONS:
-        openapi_file_type = FileType.JSON.value
-    elif openapi_path.suffix in YAML_EXTENSIONS:
-        openapi_file_type = FileType.YAML.value
-
     # attempt to parse the file according to the determined file type
-    if openapi_file_type == FileType.JSON.value:
+    if file_type == FileType.JSON.value:
         with openapi_path.open() as json_file:
             openapi = json.load(json_file)
-    elif openapi_file_type == FileType.YAML.value:
+    elif file_type == FileType.YAML.value:
         with openapi_path.open() as yaml_file:
             openapi = yaml.safe_load(yaml_file)
     else:
