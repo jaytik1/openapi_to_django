@@ -2,11 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.openapi_to_django import utils
-
-
-def test_write_file_from_template():
-    pass
+from openapi_to_django import utils
 
 
 class TestGetTokensFromUri:
