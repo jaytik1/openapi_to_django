@@ -37,7 +37,10 @@ def generate_relative_import(importing_path: Path, imported_path: Path) -> str:
     Raises:
         ValueError if the importing and imported paths are the same.
     """
-    if importing_path.resolve().absolute() == imported_path.resolve().absolute():
+    importing_path = importing_path.resolve()
+    imported_path = imported_path.resolve()
+
+    if importing_path == imported_path:
         msg = "Importing and imported paths are the same"
         raise ValueError(msg)
 
