@@ -60,4 +60,7 @@ def get_view_from_path(path: str) -> str:
     # remove braces from the path tokens name to generate the view name
     view_tokens = [re.sub(r"[\{\}]", "", token) for token in tokens]
 
+    if len(view_tokens) == 0:
+        return "index"
+
     return "_".join(view_tokens)  # generate the views.py function name
