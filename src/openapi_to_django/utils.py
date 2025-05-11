@@ -63,3 +63,23 @@ def generate_relative_import(importing_path: Path, imported_path: Path) -> str:
         import_statement = f"from {imported_path.parent.stem} import {imported_path.stem}"
 
     return import_statement
+
+
+def extract_path_param(uri_token: str):
+    """
+    Extract an OpenAPI path parameter's name from a URI token.
+
+    For example, if the token "{id}" is given, it would extract "id".
+
+    Returns:
+        The path parameter's name if the token is an OpenAPI path parameter,
+        None otherwise.
+    """
+    extract_parameter = re.compile(r"(?<=\{)(.+)(?=\})")
+    parameter_list = extract_parameter.findall(uri_token)
+
+    # continue if the current token isn't a path parameter
+    if len(parameter_list) != 1:
+        return None
+
+    return parameter_list[0]
