@@ -8,7 +8,7 @@ from django.template import Context
 
 from openapi_to_django.exceptions import ParameterError
 from openapi_to_django.openapi import PathData
-from openapi_to_django.utils import generate_relative_import, get_tokens_from_uri
+from openapi_to_django.utils import extract_path_param, generate_relative_import, get_tokens_from_uri
 from openapi_to_django.views import get_view_from_path
 
 
@@ -76,23 +76,18 @@ def get_url_from_path(path: str, path_params: dict[str, str]) -> str:
     url_tokens = []
 
     for token in tokens:
-        # get the parameter name inside the braces
-        # e.g. gets "id" from "{id}"
-        extract_parameter = re.compile(r"(?<=\{)(.+)(?=\})")
-        parameter_list = extract_parameter.findall(token)
+        param = extract_path_param(token)
 
         # continue if the current token isn't a path parameter
-        if len(parameter_list) != 1:
+        if param is None:
             url_tokens.append(token)
             continue
 
-        param_name = parameter_list[0]
-
-        if param_name not in path_params:
-            msg = f"Error generating URL: parameter name {param_name} not defined!"
+        if param not in path_params:
+            msg = f"Error generating URL: path parameter {param} not defined!"
             raise ParameterError(msg)
 
-        param_type = path_params[param_name]
-        url_tokens.append(f"<{param_type}:{param_name}>")
+        param_type = path_params[param]
+        url_tokens.append(f"<{param_type}:{param}>")
 
     return "/".join(url_tokens)  # generate the Django path URL
