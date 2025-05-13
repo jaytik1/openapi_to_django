@@ -78,3 +78,13 @@ class TestGenerateRelativeImport:
 
         with pytest.raises(ValueError):
             utils.generate_relative_import(importing_path, imported_path)
+
+
+class TestExtractPathParam:
+    """Test functions for the extract_path_param() method."""
+
+    def test_no_path_param(self):
+        assert utils.extract_path_param("example") is None
+
+    def test_path_param(self):
+        assert utils.extract_path_param("{example}") == "example"

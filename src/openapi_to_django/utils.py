@@ -65,11 +65,14 @@ def generate_relative_import(importing_path: Path, imported_path: Path) -> str:
     return import_statement
 
 
-def extract_path_param(uri_token: str):
+def extract_path_param(uri_token: str) -> str | None:
     """
     Extract an OpenAPI path parameter's name from a URI token.
 
     For example, if the token "{id}" is given, it would extract "id".
+
+    Args:
+        uri_token: URI token to be parsed.
 
     Returns:
         The path parameter's name if the token is an OpenAPI path parameter,
