@@ -269,6 +269,11 @@
             "format": "date",
             "example": "2025-01-10"
           },
+          "integerExample": {
+            "type": "integer",
+            "format": "int64",
+            "example": 5
+          },
           "booleanExample": {
             "type": "boolean",
             "example": true
@@ -296,7 +301,7 @@
           "objectExample": {
             "type": "object",
             "properties": {
-              "integerExample": {
+              "propertyExample": {
                 "type": "integer",
                 "format": "int64",
                 "example": 5
