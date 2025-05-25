@@ -5,9 +5,3 @@ class ParameterError(Exception):
     """Error related to OpenAPI parameters."""
 
     pass
-
-
-class ReferenceObjectError(Exception):
-    """Error related to OpenAPI reference objects."""
-
-    pass
