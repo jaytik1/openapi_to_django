@@ -12,7 +12,6 @@ from django.core.management import call_command
 from django.template import Engine
 from prance import ResolvingParser
 
-from openapi_to_django.definitions import FileType
 from openapi_to_django.openapi import get_paths_data
 from openapi_to_django.urls import generate_urls_context
 from openapi_to_django.views import generate_views_context
@@ -34,13 +33,6 @@ class CustomArgumentParser(ArgumentParser):
         self.TEMPLATE_DIR = Path(__file__).parent / "templates"
 
         self.add_argument("openapi_file", help="file path of the OpenAPI document")
-        self.add_argument(
-            "-t",
-            "--file-type",
-            help="(optional) file type of the OpenAPI document",
-            choices=[FileType.JSON.value, FileType.YAML.value],
-            required=False,
-        )
 
         # arguments for rendering the Django urls.py file
         self.add_argument(
@@ -115,13 +107,6 @@ class CustomArgumentParser(ArgumentParser):
             self.error(msg)
 
         # default values are set here as they require the values of other arguments
-
-        if parsed_args.file_type is None:
-            # attempts to identify a file type from the OpenAPI file extension
-            if parsed_args.openapi_file.suffix == ".json":
-                parsed_args.file_type = FileType.JSON.value
-            elif parsed_args.openapi_file.suffix in [".yaml", ".yml"]:
-                parsed_args.file_type = FileType.YAML.value
 
         if parsed_args.urls_target is None:
             parsed_args.urls_target = Path(parsed_args.project_name, parsed_args.project_name, "urls.py")
