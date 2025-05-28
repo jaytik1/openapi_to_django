@@ -36,12 +36,12 @@ def get_paths_data(openapi: OpenApi) -> list[PathData]:
 
         # get path parameters from the path object
         if "parameters" in path_content:
-            parse_path_params(path_content["parameters"], path_params)
+            path_params = path_params | parse_path_params(path_content["parameters"], path_params)
 
         # get path parameters from each of the path's operation objects
         for operation_content in path_content.values():
             if "parameters" in operation_content:
-                parse_path_params(operation_content["parameters"], path_params)
+                path_params = path_params | parse_path_params(operation_content["parameters"], path_params)
 
         # convert each of the parameter types from OpenAPI to Django
         django_path_params = {
@@ -57,7 +57,7 @@ def get_paths_data(openapi: OpenApi) -> list[PathData]:
 def parse_path_params(
     params_list: list[dict[str, Any]],
     current_params: dict[str, str],
-) -> None:
+) -> dict[str, str]:
     """
     Parse a list of OpenAPI parameter objects to get their names and types.
 
@@ -66,11 +66,16 @@ def parse_path_params(
     Args:
         params_list: List of OpenAPI parameter objects.
         current_params: Existing mapping of parameters to types,
-        which is checked for conflicts and used to store new path parameters.
+        which is checked for conflicts.
+
+    Returns:
+        Mapping of the parameters in the given list to their types.
 
     Raises:
         ParameterError: There is a conflicting path parameter (same name but different type).
     """
+    result_params: dict[str, str] = {}
+
     for parameter in params_list:
         if parameter["in"] != "path":
             # ignore non-path parameters
@@ -80,7 +85,9 @@ def parse_path_params(
         param_type = parameter["schema"]["type"]
 
         if param_name not in current_params:
-            current_params[param_name] = param_type
+            result_params[param_name] = param_type
         elif current_params[param_name] != param_type:
-            msg = f"Conflicting parameter type: {param_name}"
+            msg = f'Conflicting types given for path parameter "{param_name}" ({param_type} vs {current_params[param_name]})'
             raise ParameterError(msg)
+
+    return result_params
