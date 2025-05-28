@@ -87,29 +87,23 @@ class TestGenerateViewsContext:
     @pytest.mark.parametrize(
         "paths_data",
         [
-            ([PathData(openapi_path="/example/{id}", path_params={})]),
-            (
-                [
-                    PathData(openapi_path="/example", path_params={}),
-                    PathData(openapi_path="/example/{id}/{username}", path_params={"id": "int"}),
-                ]
-            ),
-            (
-                [
-                    PathData(openapi_path="/example/{id}/{username}", path_params={"username": "str"}),
-                    PathData(openapi_path="/example", path_params={}),
-                ]
-            ),
-            (
-                [
-                    PathData(
-                        openapi_path="/example/{id}/{username}",
-                        path_params={"id": "int", "username": "str"},
-                    ),
-                    PathData(openapi_path="/index/{username}", path_params={}),
-                    PathData(openapi_path="/forum", path_params={}),
-                ]
-            ),
+            [PathData(openapi_path="/example/{id}", path_params={})],
+            [
+                PathData(openapi_path="/example", path_params={}),
+                PathData(openapi_path="/example/{id}/{username}", path_params={"id": "int"}),
+            ],
+            [
+                PathData(openapi_path="/example/{id}/{username}", path_params={"username": "str"}),
+                PathData(openapi_path="/example", path_params={}),
+            ],
+            [
+                PathData(
+                    openapi_path="/example/{id}/{username}",
+                    path_params={"id": "int", "username": "str"},
+                ),
+                PathData(openapi_path="/index/{username}", path_params={}),
+                PathData(openapi_path="/forum", path_params={}),
+            ],
         ],
     )
     def test_missing_params(self, paths_data):
