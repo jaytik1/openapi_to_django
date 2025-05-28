@@ -169,6 +169,10 @@ components:
           type: string
           format: date
           example: '2025-01-10'
+        integerExample:
+          type: integer
+          format: int64
+          example: 5
         booleanExample:
           type: boolean
           example: true

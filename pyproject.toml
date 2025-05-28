@@ -17,12 +17,13 @@ classifiers = [
     "Topic :: Software Development :: Code Generators"
 ]
 
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "django (>=5.1.7,<6.0.0)",
     "pyyaml (>=6.0.2,<7.0.0)",
     "types-pyyaml (>=6.0.12.20241230,<7.0.0.0)",
-    "pytest (>=8.3.5,<9.0.0)"
+    "prance (>=25.4.8.0,<26.0.0.0)",
+    "openapi-spec-validator (>=0.7.1,<0.8.0)",
 ]
 
 [project.urls]
