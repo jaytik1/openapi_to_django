@@ -30,13 +30,8 @@ This repository includes a helper script `src/main.py`, used for generating a ne
 # example: view all arguments for the script (START HERE)
 python3 main.py --help
 
-# example: create a new project with a specified project name
-python3 main.py myopenapi.json \
---project-name example_project
-
-# example: create a new project with specified project and app names from a YAML OpenAPI document
-python3 main.py openapidoc --file-type yaml \
---project-name example_project --app-name example_app
+# example: create a new project with specified project and app names
+python3 main.py openapidoc.json --project-name example_project --app-name example_app
 ```
 
 ## Using in an Existing Django Project
@@ -47,8 +42,8 @@ The `src/loadopenapi.py` script be installed in an existing Django project as th
 # example: view all arguments for the script (START HERE)
 python3 manage.py loadopenapi --help
 
-# example: load a YAML OpenAPI document using the provided templates
-python3 manage.py loadopenapi openapidoc --file-type yaml \
+# example: load an OpenAPI document using the provided templates
+python3 manage.py loadopenapi openapidoc.yml \
 --urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl
 
 # example: load an OpenAPI document using the provided templates to specific locations
