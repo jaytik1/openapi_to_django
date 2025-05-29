@@ -31,6 +31,9 @@ def get_paths_data(openapi: OpenApi) -> list[PathData]:
     """
     paths_data = []
 
+    if "paths" not in openapi:
+        return paths_data
+
     for path_name, path_content in openapi["paths"].items():
         path_params: dict[str, str] = {}
 
@@ -83,6 +86,10 @@ def parse_path_params(
 
         param_name = parameter["name"]
         param_type = parameter["schema"]["type"]
+
+        if param_name in result_params:
+            msg = f'Path parameter "{param_name}" defined multiple times in the same scope.'
+            raise ParameterError(msg)
 
         if param_name not in current_params:
             result_params[param_name] = param_type
