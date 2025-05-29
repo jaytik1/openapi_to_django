@@ -85,4 +85,4 @@ def extract_path_param(uri_token: str) -> str | None:
     if len(parameter_list) != 1:
         return None
 
-    return parameter_list[0]
+    return str(parameter_list[0])

@@ -29,7 +29,7 @@ def get_paths_data(openapi: OpenApi) -> list[PathData]:
     Returns:
         List of PathData objects gathered from the OpenAPI document.
     """
-    paths_data = []
+    paths_data: list[PathData] = []
 
     if "paths" not in openapi:
         return paths_data
