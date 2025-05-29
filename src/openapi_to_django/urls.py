@@ -1,6 +1,5 @@
 """Functions and variables related to the Django urls.py file."""
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
