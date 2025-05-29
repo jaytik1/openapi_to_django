@@ -87,14 +87,14 @@ def parse_path_params(
         param_name = parameter["name"]
         param_type = parameter["schema"]["type"]
 
-        # if param_name in result_params:
-        #     msg = f'Path parameter "{param_name}" defined multiple times in the same scope.'
-        #     raise ParameterError(msg)
+        if param_name in result_params:
+            msg = f'Path parameter "{param_name}" defined multiple times in the same scope.'
+            raise ParameterError(msg)
 
         if param_name not in current_params:
             result_params[param_name] = param_type
-        # elif current_params[param_name] != param_type:
-        #     msg = f'Conflicting types given for path parameter "{param_name}" ({param_type} vs {current_params[param_name]})'
-        #     raise ParameterError(msg)
+        elif current_params[param_name] != param_type:
+            msg = f'Conflicting types given for path parameter "{param_name}" ({param_type} vs {current_params[param_name]})'
+            raise ParameterError(msg)
 
     return result_params
