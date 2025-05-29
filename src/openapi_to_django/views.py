@@ -6,8 +6,9 @@ from pathlib import Path
 
 from django.template import Context
 
+from openapi_to_django.exceptions import ParameterError
 from openapi_to_django.openapi import PathData
-from openapi_to_django.utils import get_tokens_from_uri
+from openapi_to_django.utils import extract_path_param, get_tokens_from_uri
 
 
 @dataclass
@@ -36,6 +37,16 @@ def generate_views_context(
 
     # generate a DjangoView object for each path
     for path_data in paths_data:
+        tokens = get_tokens_from_uri(path_data.openapi_path)
+
+        # validate that each path parameter is defined
+        for token in tokens:
+            param = extract_path_param(token)
+
+            if param is not None and param not in path_data.path_params:
+                msg = f"Error generating view context: path parameter {param} not defined!"
+                raise ParameterError(msg)
+
         view_name = get_view_from_path(path_data.openapi_path)
         views.append(DjangoView(view_name, path_data.path_params))
 
@@ -59,5 +70,8 @@ def get_view_from_path(path: str) -> str:
 
     # remove braces from the path tokens name to generate the view name
     view_tokens = [re.sub(r"[\{\}]", "", token) for token in tokens]
+
+    if len(view_tokens) == 0:
+        return "index"
 
     return "_".join(view_tokens)  # generate the views.py function name
