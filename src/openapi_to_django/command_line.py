@@ -4,9 +4,8 @@ Command line tool to load an OpenAPI document into a new Django project.
 Create a new Django project and app, then load a given OpenAPI document into the new project.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Self
 
 from django.core.management import call_command
 from django.template import Engine
@@ -16,131 +15,31 @@ from openapi_to_django.openapi import get_paths_data
 from openapi_to_django.urls import generate_urls_context
 from openapi_to_django.views import generate_views_context
 
-
-class CustomArgumentParser(ArgumentParser):
-    """
-    Argument parser used by the OpenAPI to Django tool.
-
-    Contains arguments such as the path to the OpenAPI file and paths to Django templates.
-    """
-
-    TEMPLATE_DIR: Path
-
-    def __init__(self: Self, **kwargs: Any) -> None:
-        """Create the arguments used by the OpenAPI to Django command line tools."""
-        super().__init__(**kwargs)
-
-        self.TEMPLATE_DIR = Path(__file__).parent / "templates"
-
-        self.add_argument("openapi_file", help="file path of the OpenAPI document")
-
-        # arguments for rendering the Django urls.py file
-        self.add_argument(
-            "--urls-template",
-            help="template file for rendering Django paths in urls.py",
-            default=self.TEMPLATE_DIR / "urls.py-tpl",
-        )
-        self.add_argument(
-            "--urls-target",
-            help="file where the generated Django URL paths should be written",
-        )
-
-        # arguments for rendering the Django views.py file
-        self.add_argument(
-            "--views-template",
-            help="template file for rendering functions in views.py",
-            default=self.TEMPLATE_DIR / "views.py-tpl",
-        )
-        self.add_argument(
-            "--views-target",
-            help="file where the generated Django view functions should be written",
-        )
-
-        # arguments for setting up a new Django project
-        self.add_argument(
-            "-p",
-            "--project-name",
-            help="name of the Django project being created",
-            default="openapi_django",
-        )
-        self.add_argument(
-            "--project-template",
-            help="template folder for the Django project",
-            default=self.TEMPLATE_DIR / "project_template",
-        )
-
-        # arguments for setting up a new Django app
-        self.add_argument(
-            "-a",
-            "--app-name",
-            help="name of the Django app being created",
-            default="openapi_django_app",
-        )
-        self.add_argument(
-            "--app-template",
-            help="template folder for the Django app",
-            default=self.TEMPLATE_DIR / "app_template",
-        )
-
-    def parse_args(self: Self, **kwargs: Any) -> Namespace:  # type: ignore
-        """
-        Parse arguments and perform necessary validation checks. Convert file paths to Path objects when necessary.
-
-        Returns:
-            Namespace object containing the parsed and validated arguments.
-        """
-        parsed_args: Namespace = super().parse_args(**kwargs)
-
-        parsed_args.openapi_file = Path(parsed_args.openapi_file).resolve()
-        if not parsed_args.openapi_file.is_file():
-            msg = f"OpenAPI file {parsed_args.openapi_file} does not exist"
-            self.error(msg)
-
-        parsed_args.urls_template = Path(parsed_args.urls_template).resolve()
-        if not parsed_args.urls_template.is_file():
-            msg = f"urls.py template file {parsed_args.urls_template} does not exist"
-            self.error(msg)
-
-        parsed_args.views_template = Path(parsed_args.views_template).resolve()
-        if not parsed_args.views_template.is_file():
-            msg = f"views.py template file {parsed_args.views_template} does not exist"
-            self.error(msg)
-
-        # default values are set here as they require the values of other arguments
-
-        if parsed_args.urls_target is None:
-            parsed_args.urls_target = Path(parsed_args.project_name, parsed_args.project_name, "urls.py")
-
-        parsed_args.urls_target = Path(parsed_args.urls_target).resolve()
-
-        if parsed_args.views_target is None:
-            parsed_args.views_target = Path(parsed_args.project_name, parsed_args.app_name, "views.py")
-
-        parsed_args.views_target = Path(parsed_args.views_target).resolve()
-
-        return parsed_args
+PROJECT_MODE = "projects"
+FILE_MODE = "files"
 
 
 def main() -> None:
     """Load a given OpenAPI document into a new Django project and app."""
-    parser = CustomArgumentParser()
-    args = parser.parse_args()
+    parser = create_parser()
+    args = validate_args(parser.parse_args())
 
-    # attempt to create a new Django project
-    call_command("startproject", args.project_name, template=str(args.project_template))
-    print(f"Created Django project {args.project_name}.")
+    if args.mode == PROJECT_MODE:
+        # attempt to create a new Django project
+        call_command("startproject", args.project_name, template=str(args.project_template))
+        print(f"Created Django project {args.project_name}.")
 
-    # attempt to create a new app in the new Django project
-    app_directory = Path(args.project_name, args.app_name)
-    app_directory.mkdir(parents=True)
+        # attempt to create a new app in the new Django project
+        app_directory = Path(args.project_name, args.app_name)
+        app_directory.mkdir(parents=True)
 
-    call_command(
-        "startapp",
-        args.app_name,
-        app_directory,
-        template=str(args.app_template),
-    )
-    print(f"Created Django app {args.app_name} in directory {app_directory}.")
+        call_command(
+            "startapp",
+            args.app_name,
+            app_directory,
+            template=str(args.app_template),
+        )
+        print(f"Created Django app {args.app_name} in directory {app_directory}.")
 
     # load the OpenAPI document
     openapi = ResolvingParser(args.openapi_file.as_uri()).specification
@@ -170,6 +69,121 @@ def main() -> None:
     print(f"Loaded Django views to {args.views_target}.")
 
     print("OpenAPI to Django setup complete.")
+
+
+def create_parser() -> ArgumentParser:
+    """
+    Create the ArgumentParser used by the openapi_to_django command.
+
+    Two subparsers are created and linked to the main parser.
+    The projects subparser is used to create new Django projects.
+    The files subparser is used to just create the generated files.
+
+    Returns:
+        ArgumentParser to be used by the command line tool.
+    """
+    template_dir = Path(__file__).parent / "templates"
+
+    # parser containing arguments present in all subparsers
+    base_parser = ArgumentParser(add_help=False)
+
+    base_parser.add_argument("openapi_file", help="file path of the OpenAPI document")
+    base_parser.add_argument(
+        "--urls-template",
+        help="custom template file for rendering urls.py",
+        default=template_dir / "urls.py-tpl",
+    )
+    base_parser.add_argument(
+        "--views-template",
+        help="custom template file for rendering views.py",
+        default=template_dir / "views.py-tpl",
+    )
+
+    # main parser used to store the subparsers
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers(required=True, dest="mode")
+
+    # subparser for generating Django projects
+    project_mode_parser = subparsers.add_parser(PROJECT_MODE, parents=[base_parser])
+
+    project_mode_parser.add_argument(
+        "-p",
+        "--project-name",
+        help="name of the Django project being created",
+        default="openapi_django",
+    )
+    project_mode_parser.add_argument(
+        "-a",
+        "--app-name",
+        help="name of the Django app being created",
+        default="openapi_django_app",
+    )
+    project_mode_parser.add_argument(
+        "--project-template",
+        help="custom template folder for the Django project",
+        default=template_dir / "project_template",
+    )
+    project_mode_parser.add_argument(
+        "--app-template",
+        help="custom template folder for the Django app",
+        default=template_dir / "app_template",
+    )
+
+    # subparser for generating just files
+    file_mode_parser = subparsers.add_parser(FILE_MODE, parents=[base_parser])
+
+    file_mode_parser.add_argument(
+        "-u",
+        "--urls-target",
+        help="file where the generated Django URL paths should be written",
+        default=Path("urls.py"),
+    )
+    file_mode_parser.add_argument(
+        "-v",
+        "--views-target",
+        help="file where the generated Django view functions should be written",
+        default=Path("views.py"),
+    )
+
+    return parser
+
+
+def validate_args(parsed_args: Namespace) -> Namespace:  # ignore
+    """
+    Validate that the given command line arguments are valid.
+
+    Mainly used to check that given files actually exist.
+    Updates path arguments to be the Path type rather than the Action type.
+
+    Args:
+        parsed_args: Parsed arguments obtained from the ArgumentParser.
+
+    Raises:
+        ArgumentError: One of the command line arguments was invalid.
+
+    Returns:
+        Validated and updated arguments.
+    """
+    parsed_args.openapi_file = Path(parsed_args.openapi_file).resolve()
+    if not parsed_args.openapi_file.is_file():
+        msg = f"OpenAPI file {parsed_args.openapi_file} does not exist"
+        raise ArgumentError(None, msg)
+
+    parsed_args.urls_template = Path(parsed_args.urls_template).resolve()
+    if not parsed_args.urls_template.is_file():
+        msg = f"urls.py template file {parsed_args.urls_template} does not exist"
+        raise ArgumentError(None, msg)
+
+    parsed_args.views_template = Path(parsed_args.views_template).resolve()
+    if not parsed_args.views_template.is_file():
+        msg = f"views.py template file {parsed_args.views_template} does not exist"
+        raise ArgumentError(None, msg)
+
+    if parsed_args.mode == PROJECT_MODE:
+        parsed_args.urls_target = Path(parsed_args.project_name, parsed_args.project_name, "urls.py")
+        parsed_args.views_target = Path(parsed_args.project_name, parsed_args.app_name, "views.py")
+
+    return parsed_args
 
 
 if __name__ == "__main__":
