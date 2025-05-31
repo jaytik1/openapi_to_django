@@ -34,12 +34,54 @@ poetry build
 
 ## Generating Django Code
 
-Once installed, use the `openapi_to_django` command line tool to generate Django code. The tool requires an OpenAPI document to be specified, which can be either a JSON or YAML file, examples of which are in the `openapi/` folder. Currently, `urls.py` and `views.py` are generated from the specified OpenAPI document when the tool is used.
+Once installed, use the `openapi_to_django` command line tool to generate Django code. The tool requires an OpenAPI document to be specified, which can be either a JSON or YAML file, examples of which are in the `openapi/` folder. Custom templates can also be passed as inputs to be used by the tool.
 
-Below are some examples of how the tool can be used.
+Currently, `urls.py` and `views.py` are generated from the specified OpenAPI document when the tool is used. The tool can be used in either "projects" or "files" mode which are described below.
+
+### Projects Mode
+
+Using "projects mode" (with the `projects` keyword) creates a full Django project with the generated files inside. Additional command line arguments for configuring the generated project can also be given. Below are examples of how projects mode can be used.
 
 ```shell
+# view all arguments available in projects mode
+openapi_to_django projects --help
 
+# create a new project using the default variables
+openapi_to_django projects openapi/example_openapi.json
+
+# create a new project with specified project and app names
+openapi_to_django projects openapi/example_openapi.json \
+  --project-name example_project \
+  --app-name example_app
+
+# create a new project using custom templates
+openapi_to_django projects openapi/example_openapi.json \
+  --urls-template src/openapi_to_django/templates/urls.py-tpl \
+  --views-template src/openapi_to_django/templates/views.py-tpl \
+  --project-template src/openapi_to_django/templates/project_template/ \
+  --app-template src/openapi_to_django/templates/app_template/
+```
+
+### Files Mode
+
+Using "files mode" (with the `files` keyword) just outputs the generated `urls.py` and `views.py` files without creating a full Django project. The locations for these files can be specified, and if these files already exist, the generated code is appended to the end of the files. Below are examples of how files mode can be used.
+
+```shell
+# view all arguments available in files mode
+openapi_to_django files --help
+
+# generate files using the default variables
+openapi_to_django files openapi/example_openapi.json
+
+# output files to a custom location
+openapi_to_django files openapi/example_openapi.json \
+  --urls-target urls.py \
+  --views-target views.py
+
+# generate files using custom templates
+openapi_to_django files openapi/example_openapi.json \
+  --urls-template src/openapi_to_django/templates/urls.py-tpl \
+  --views-template src/openapi_to_django/templates/views.py-tpl
 ```
 
 ## Features
