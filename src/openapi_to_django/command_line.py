@@ -20,7 +20,7 @@ FILE_MODE = "files"
 
 
 def main() -> None:
-    """Load a given OpenAPI document into a new Django project and app."""
+    """Load a given OpenAPI document with an ArgumentParser and generate Django code."""
     parser = create_parser()
     args = validate_args(parser.parse_args())
 
