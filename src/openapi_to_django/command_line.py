@@ -180,8 +180,19 @@ def validate_args(parsed_args: Namespace) -> Namespace:  # ignore
         raise ArgumentError(None, msg)
 
     if parsed_args.mode == PROJECT_MODE:
-        parsed_args.urls_target = Path(parsed_args.project_name, parsed_args.project_name, "urls.py")
-        parsed_args.views_target = Path(parsed_args.project_name, parsed_args.app_name, "views.py")
+        parsed_args.urls_target = Path(
+            parsed_args.project_name,
+            parsed_args.project_name,
+            "urls.py",
+        ).resolve()
+        parsed_args.views_target = Path(
+            parsed_args.project_name,
+            parsed_args.app_name,
+            "views.py",
+        ).resolve()
+    elif parsed_args.mode == FILE_MODE:
+        parsed_args.urls_target = Path(parsed_args.urls_target).resolve()
+        parsed_args.views_target = Path(parsed_args.views_target).resolve()
 
     return parsed_args
 
