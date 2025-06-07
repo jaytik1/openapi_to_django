@@ -1,88 +1,101 @@
 # OpenAPI to Django
 
-Built in [![Python 3.11.2](https://img.shields.io/badge/Python-3.11.2-3c78a9)](https://www.python.org/downloads/release/python-3112/) for [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-85ea2d)](https://spec.openapis.org/oas/v3.1.1.html)[![Django 5.1.5](https://img.shields.io/badge/Django-5.1.5-0c4b33)]([https://spec.openapis.org/oas/v3.1.1.html](https://docs.djangoproject.com/en/5.1/releases/5.1.5/)) under [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit). **Note that this branch is currently a pre-release and shouldn't be treated as stable.**
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3c78a9)](https://www.python.org/downloads/release/python-31112/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-85ea2d)](https://spec.openapis.org/oas/v3.1.1.html) [![Django 5.1](https://img.shields.io/badge/Django-5.1-0c4b33)](https://docs.djangoproject.com/en/5.1/releases/5.1.10/) [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit)
+
+**Note that this project is currently a pre-release and shouldn't be treated as stable.**
 
 ## Overview
 
-This is a Python project used to generate Django files and code from OpenAPI documents.
+OpenAPI to Django is a Python tool used to generate Django code from OpenAPI documents.
 
-While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can generate OpenAPI documents from Python code, there are fewer tools available to do the opposite, generating a backend server from an OpenAPI document. OpenAPITools' [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) includes generating server stubs from OpenAPI documents, but it currently doesn't support Django (as of 8th Jan 2025), so I decided I'd give it a go!
+While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can generate OpenAPI documents from Python code, there are fewer tools available to do the opposite, generating a backend server from an OpenAPI document. OpenAPITools' [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) includes generating server stubs from OpenAPI documents, but it currently doesn't support Django (as of 30th May 2025), so I decided I'd give it a go!
 
 ## Setup
 
-```shell
-# create a Python virtual environment
-python3 -m venv .venv
+### Installing with pipx
 
-# activate the virtual environment
-source .venv/bin/activate   # Linux / MacOS
-.venv\Scripts\activate.bat  # Windows
+Use `pipx install openapi_to_django` to install OpenAPI to Django from PyPI. Instructions for installing `pipx` can be found [here](https://packaging.python.org/en/latest/guides/installing-stand-alone-command-line-tools/).
 
-# install required packages
-pip install -r requirements.txt
-```
+### Building from Source
 
-## Creating a New Django Project
-
-This repository includes a helper script `src/main.py`, used for generating a new Django project and loading an OpenAPI document in one go.
+The package can also be built from source. This requires Poetry to be installed, use `pipx install poetry` or see instructions [here](https://python-poetry.org/docs/#installation).
 
 ```shell
-# example: view all arguments for the script (START HERE)
-python3 main.py --help
+# clone the repository
+git clone git@github.com:jaytik1/openapi_to_django.git
+cd openapi_to_django/
 
-# example: create a new project with specified project and app names
-python3 main.py openapidoc.json --project-name example_project --app-name example_app
+# use Poetry to install dependencies
+poetry install
+
+# build the package (output in the dist/ folder)
+poetry build
 ```
 
-## Using in an Existing Django Project
+## Using the Tool
 
-The `src/loadopenapi.py` script be installed in an existing Django project as the command `loadopenapi` (see the FAQs below for instructions).
+Once installed, use the `openapi_to_django` command line tool to generate Django code. The tool requires an OpenAPI document to be specified, which can be either a JSON or YAML file, examples of which are in the `openapi/` folder. Custom templates can also be passed as inputs to be used by the tool.
+
+Currently, Django `urls.py` and `views.py` files are generated from the specified OpenAPI document. The tool can be used in either "projects" or "files" mode which are described below.
+
+### Projects Mode
+
+Using "projects mode" (with the `projects` keyword) creates a full Django project with the generated files inside. Additional command line arguments for configuring the generated project can also be given. Below are examples of how projects mode can be used.
 
 ```shell
-# example: view all arguments for the script (START HERE)
-python3 manage.py loadopenapi --help
+# view all arguments available in projects mode
+openapi_to_django projects --help
 
-# example: load an OpenAPI document using the provided templates
-python3 manage.py loadopenapi openapidoc.yml \
---urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl
+# create a new project using the default variables
+openapi_to_django projects openapi/example_openapi.json
 
-# example: load an OpenAPI document using the provided templates to specific locations
-python3 manage.py loadopenapi openapi.json \
---urls-template ../templates/urls.py-tpl --views-template ../templates/views.py-tpl \
---urls-target myproject/myproject/urls.py --views-target myproject/myapp/views.py
+# create a new project with specified project and app names
+openapi_to_django projects openapi/example_openapi.json \
+  --project-name example_project \
+  --app-name example_app
+
+# create a new project using custom templates
+openapi_to_django projects openapi/example_openapi.json \
+  --urls-template src/openapi_to_django/templates/urls.py-tpl \
+  --views-template src/openapi_to_django/templates/views.py-tpl \
+  --project-template src/openapi_to_django/templates/project_template/ \
+  --app-template src/openapi_to_django/templates/app_template/
 ```
 
-## Features
+### Files Mode
 
-- Generates code from an OpenAPI document for both new and existing Django projects
-  - Generates Django paths in a `urls.py` file for each path in the given OpenAPI document
-  - Generates corresponding functions in a `views.py` file for each OpenAPI path
-- Example OpenAPI documents are provided (`openapi/example.yaml` and `openapi/example.json`)
-  - Designed to cover a range of OpenAPI 3.1 features to demonstrate the project
-  - Contains examples of endpoints supporting GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH and TRACE operations
-  - Contains examples of each data type permitted by the specification (`null`, `boolean`, `object`, `array`, `number`, `string` and `integer`), as well as various `format` values
-  - Contains components which are reused in various places in the document, including requests, responses, schemas and a basic security scheme
+Using "files mode" (with the `files` keyword) just outputs the generated `urls.py` and `views.py` files without creating a full Django project. The locations for these files can be specified, and if these files already exist, the generated code is appended to the end of the files. Below are examples of how files mode can be used.
+
+```shell
+# view all arguments available in files mode
+openapi_to_django files --help
+
+# generate files using the default variables
+openapi_to_django files openapi/example_openapi.json
+
+# output files to a custom location
+openapi_to_django files openapi/example_openapi.json \
+  --urls-target urls.py \
+  --views-target views.py
+
+# generate files using custom templates
+openapi_to_django files openapi/example_openapi.json \
+  --urls-template src/openapi_to_django/templates/urls.py-tpl \
+  --views-template src/openapi_to_django/templates/views.py-tpl
+```
 
 ## FAQs
-
-### How can I install the `loadopenapi` command in my Django project?
-
-- Make sure your Django project has an app inside (can be created with `python3 manage.py startapp <name>`)
-- Make sure the Django app is included in the `INSTALLED_APPS` list in the project's `settings.py` file
-- Make sure the `loadopenapi.py` file exists in the `management/commands/` directory of the Django app (create these directories if needed, then copy `loadopenapi.py` from the `src/` folder)
-- You should then be able to run `python3 manage.py loadopenapi` successfully!
 
 ### What are template files and how do I use them?
 
 - Template files have the extension `.py-tpl` and can be found in the `templates/` folder
-- They are used by Django to render files in a specific way, and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
-  - As well as this program, they are used by Django's built-in `startproject` and `startapp` commands
-- The template files for this project are used to generate a Django project with `main.py` and generate files with the `loadopenapi` command
+- They are used to render files in a specific way and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
+  - As well as in this project, they are used by Django's built-in `startproject` and `startapp` commands
 - `urls.py-tpl` and `views.py-tpl` are the key files, as they determine how OpenAPI paths are converted to Django paths and view functions
-- If you don't like how they render, you can create your own template files and use them with `loadopenapi`'s `--urls-template` and `--views-template` arguments!
+- Custom templates can be passed to the tool using the appropriate arguments
 
 ## Licensing
 
 - Licenses for the project can be found in `LICENSES/`
-- `LICENSE`: This repository is distributed under the [MIT License](https://opensource.org/license/mit)
-- `LICENSE_DJANGO`: As elements of the Django source code have been copied and modified (including project and app templates, as well as some template rendering), the Django BSD 3-Clause License file is also included
+- `LICENSE`: This repository is distributed under the [MIT License](https://opensource.org/license/mit).
+- `LICENSE_DJANGO`: As elements of the Django source code have been used (including project and app templates, as well as some template rendering systems), the Django BSD 3-Clause License file is also included.
