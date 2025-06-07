@@ -20,7 +20,7 @@ Use `pipx install openapi_to_django` to install OpenAPI to Django from PyPI. Ins
 
 The package can also be built from source. This requires Poetry to be installed, use `pipx install poetry` or see instructions [here](https://python-poetry.org/docs/#installation).
 
-```bash
+```shell
 # clone the repository
 git clone git@github.com:jaytik1/openapi_to_django.git
 cd openapi_to_django/
@@ -42,7 +42,7 @@ Currently, Django `urls.py` and `views.py` files are generated from the specifie
 
 Using "projects mode" (with the `projects` keyword) creates a full Django project with the generated files inside. Additional command line arguments for configuring the generated project can also be given. Below are examples of how projects mode can be used.
 
-```bash
+```shell
 # view all arguments available in projects mode
 openapi_to_django projects --help
 
@@ -66,7 +66,7 @@ openapi_to_django projects openapi/example_openapi.json \
 
 Using "files mode" (with the `files` keyword) just outputs the generated `urls.py` and `views.py` files without creating a full Django project. The locations for these files can be specified, and if these files already exist, the generated code is appended to the end of the files. Below are examples of how files mode can be used.
 
-```bash
+```shell
 # view all arguments available in files mode
 openapi_to_django files --help
 
