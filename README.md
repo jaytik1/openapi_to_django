@@ -6,7 +6,7 @@
 
 ## Overview
 
-This is a Python project used to generate Django code from OpenAPI documents.
+OpenAPI to Django is a Python tool used to generate Django code from OpenAPI documents.
 
 While popular tools like [FastAPI](https://github.com/fastapi/fastapi) can generate OpenAPI documents from Python code, there are fewer tools available to do the opposite, generating a backend server from an OpenAPI document. OpenAPITools' [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) includes generating server stubs from OpenAPI documents, but it currently doesn't support Django (as of 30th May 2025), so I decided I'd give it a go!
 
