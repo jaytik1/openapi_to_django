@@ -32,11 +32,11 @@ poetry install
 poetry build
 ```
 
-## Generating Django Code
+## Using the Tool
 
 Once installed, use the `openapi_to_django` command line tool to generate Django code. The tool requires an OpenAPI document to be specified, which can be either a JSON or YAML file, examples of which are in the `openapi/` folder. Custom templates can also be passed as inputs to be used by the tool.
 
-Currently, `urls.py` and `views.py` are generated from the specified OpenAPI document when the tool is used. The tool can be used in either "projects" or "files" mode which are described below.
+Currently, Django `urls.py` and `views.py` files are generated from the specified OpenAPI document. The tool can be used in either "projects" or "files" mode which are described below.
 
 ### Projects Mode
 
@@ -84,27 +84,15 @@ openapi_to_django files openapi/example_openapi.json \
   --views-template src/openapi_to_django/templates/views.py-tpl
 ```
 
-## Features
-
-- Generates code from an OpenAPI document for both new and existing Django projects
-  - Generates Django paths in a `urls.py` file for each path in the given OpenAPI document
-  - Generates corresponding functions in a `views.py` file for each OpenAPI path
-- Example OpenAPI documents are provided (`openapi/example.yaml` and `openapi/example.json`)
-  - Designed to cover a range of OpenAPI 3.1 features to demonstrate the project
-  - Contains examples of endpoints supporting GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH and TRACE operations
-  - Contains examples of each data type permitted by the specification (`null`, `boolean`, `object`, `array`, `number`, `string` and `integer`), as well as various `format` values
-  - Contains components which are reused in various places in the document, including requests, responses, schemas and a basic security scheme
-
 ## FAQs
 
 ### What are template files and how do I use them?
 
 - Template files have the extension `.py-tpl` and can be found in the `templates/` folder
-- They are used by Django to render files in a specific way, and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
+- They are used to render files in a specific way and are written in the [Django template language](https://docs.djangoproject.com/en/5.1/ref/templates/language/)
   - As well as in this project, they are used by Django's built-in `startproject` and `startapp` commands
-- The template files for this project are used to generate a Django project with `main.py` and generate files with the `loadopenapi` command
 - `urls.py-tpl` and `views.py-tpl` are the key files, as they determine how OpenAPI paths are converted to Django paths and view functions
-- If you don't like how they render, you can create your own template files and use them with `loadopenapi`'s `--urls-template` and `--views-template` arguments!
+- Custom templates can be passed to the tool using the appropriate arguments
 
 ## Licensing
 
