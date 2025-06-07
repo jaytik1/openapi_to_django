@@ -4,12 +4,10 @@
 Template file for rendering views.py functions for each OpenAPI endpoint.
 
 Context Variables:
-- views_exists: determines whether writing to an existing views.py file, to decide if imports and initial variables need to be written
 - views: a list of DjangoView dataclass objects to generate each function
   - view_name: name of the view function
   - params: dictionary of view function parameters mapped to their types
-
-Sorry about the weird spacing throughout, it seems to be the only way it can render properly!
+- views_exists: determines whether writing to an existing views.py file, to decide if imports and initial variables need to be written
 
 {% endcomment %}
 
