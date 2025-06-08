@@ -1,0 +1,61 @@
+# This workflow will upload the release packages to PyPI when a release is created.
+# It is based on the GitHub workflow (https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries).
+
+name: Publish Python Packages to PyPI
+
+on: push
+
+  # release:
+  #   types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build-packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build packages
+        run: |
+          pip install poetry
+          poetry install
+          poetry build
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+  publish-packages:
+    runs-on: ubuntu-latest
+    needs:
+      - build-packages
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/openapi_to_django
+
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          repository-url: https://test.pypi.org/legacy/
