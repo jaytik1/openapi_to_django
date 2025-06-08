@@ -1,6 +1,6 @@
 [project]
 name = "openapi_to_django"
-version = "0.1.1"
+version = "0.1.0"
 description = "Generate Django code from OpenAPI documents."
 authors = [
     { name = "jaytik1" }
