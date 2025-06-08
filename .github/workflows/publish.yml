@@ -1,12 +1,12 @@
 # This workflow will upload the release packages to PyPI when a release is created.
 # It is based on the GitHub workflow (https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries).
+# THIS IS CURRENTLY CONFIGURED FOR TESTPYPI, IT WILL BE CHANGED TO PYPI WHEN THE RELEASE SYSTEM IS READY.
 
-name: Publish Python Packages to PyPI
+name: Publish to TestPyPI
 
-on: push
-
-  # release:
-  #   types: [published]
+on:
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -40,8 +40,7 @@ jobs:
     needs:
       - build-packages
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
+      id-token: write  # this permission is mandatory for PyPI trusted publishing
 
     environment:
       name: testpypi
