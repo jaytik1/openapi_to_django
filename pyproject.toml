@@ -44,6 +44,11 @@ packages = [{ include = "openapi_to_django", from = "src" }]
 mypy = "^1.15.0"
 ruff = "^0.11.0"
 
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/legacy/"
+priority = "explicit"
+
 [tool.mypy]
 python_version = "3.11"
 packages = "src"
