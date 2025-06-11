@@ -61,7 +61,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          base_upload_url=$(cat response.json | jq .upload_url | sed -e "s/{.*}//g")
+          base_upload_url=$(cat response.json | jq -r .upload_url | sed -e "s/{.*}//g")
 
           for package in $(ls dist/); do
           curl -L -g \
