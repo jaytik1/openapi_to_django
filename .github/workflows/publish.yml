@@ -4,9 +4,9 @@
 
 name: Publish to TestPyPI
 
-on: push
-  # release:
-  #   types: [published]
+on:
+  release:
+    types: [published]
 
 permissions:
   contents: read
