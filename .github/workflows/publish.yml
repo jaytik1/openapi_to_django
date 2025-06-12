@@ -4,9 +4,9 @@
 
 name: Publish to TestPyPI
 
-on:
-  release:
-    types: [published]
+on: push
+  # release:
+  #   types: [published]
 
 permissions:
   contents: read
@@ -58,3 +58,4 @@ jobs:
         with:
           packages-dir: dist/
           repository-url: https://test.pypi.org/legacy/
+          verbose: true
