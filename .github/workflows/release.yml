@@ -42,6 +42,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          ls
           echo "version=$(echo $TAG | sed "s/v//g")" >> $GITHUB_OUTPUT
 
       - name: Read changelog
@@ -50,7 +51,7 @@ jobs:
         with:
           validation_level: warn
           version: ${{ steps.get_version.outputs.version }}
-          path: ./CHANGELOG.md
+          path: CHANGELOG.md
 
       - name: Create release
         env:
