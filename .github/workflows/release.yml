@@ -42,7 +42,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          echo $(ls) 1>&2
+          echo $(ls) 1>&2 ; false
           echo "version=$(echo $TAG | sed "s/v//g")" >> $GITHUB_OUTPUT
 
       - name: Read changelog
