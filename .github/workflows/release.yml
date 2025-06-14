@@ -6,33 +6,33 @@ on:
     - v*.*.*
 
 jobs:
-  build-packages:
-    runs-on: ubuntu-latest
+  # build-packages:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+  #     - name: Set up Python 3.11
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.11"
 
-      - name: Build packages
-        run: |
-          pip install poetry
-          poetry install
-          poetry build
+  #     - name: Build packages
+  #       run: |
+  #         pip install poetry
+  #         poetry install
+  #         poetry build
 
-      - name: Upload packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
+  #     - name: Upload packages
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: release-dists
+  #         path: dist/
 
   create-release:
     runs-on: ubuntu-latest
-    needs:
-      - build-packages
+    # needs:
+    #   - build-packages
     permissions:
       contents: write
 
@@ -42,7 +42,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          echo $(ls) 1>&2 ; false
+          echo "::debug::$(ls)"
           echo "version=$(echo $TAG | sed "s/v//g")" >> $GITHUB_OUTPUT
 
       - name: Read changelog
