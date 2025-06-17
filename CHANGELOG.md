@@ -22,14 +22,3 @@ The format of this document follows [Keep a Changelog 1.1.0](https://keepachange
 - GitHub Actions workflow to automatically publish the package to PyPI when a GitHub Release is published (PR #41, issue #39)
 
 [0.1.0]: https://github.com/jaytik1/openapi_to_django/releases/v0.1.0
-
-
-## [0.0.0] - 2025-06-14
-
-### Added
-
-- Test message for my changelog!
-
-### Removed
-
-- My sanity
