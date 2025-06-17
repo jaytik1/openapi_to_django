@@ -4,7 +4,7 @@ OpenAPI to Django changelog.
 
 The format of this document follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Version numbers adhere to [Semantic Versioning 2.0.0](https://semver.org/), with corresponding Git tags being prepended with "v". Breaking changes are in bold and start with "[BREAKING]". 
 
-## [0.1.0] - 2025-06-13
+## [0.1.0] - 2025-06-14
 
 ### Added
 

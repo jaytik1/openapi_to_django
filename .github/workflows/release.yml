@@ -37,19 +37,22 @@ jobs:
       contents: write
 
     steps:
-      - name: Create release
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
-          curl -L --fail-with-body \
-          -X POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer $GITHUB_TOKEN" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/jaytik1/openapi_to_django/releases \
-          -d "{\"tag_name\":\"$TAG\", \"target_commitish\":\"main\", \"name\":\"$TAG\", \"body\":\"Release version $TAG.\", \"draft\":true, \"generate_release_notes\":false}" \
-          -o response.json
+          echo "version=$(echo $TAG | sed "s/v//g")" >> $GITHUB_OUTPUT
+
+      - name: Read changelog
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_level: warn
+          version: ${{ steps.get_version.outputs.version }}
+          path: CHANGELOG.md
 
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
@@ -57,19 +60,18 @@ jobs:
           name: release-dists
           path: dist/
 
-      - name: Upload packages as release assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save list of release assets
+        id: assets_list
         run: |
-          base_upload_url=$(cat response.json | jq -r .upload_url | sed -e "s/{.*}//g")
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          ls -1d dist/* >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          for package in $(ls dist/); do
-            curl -L --fail-with-body \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/octet-stream" \
-            "$base_upload_url?name=$package" \
-            --data-binary "@dist/$package";
-          done
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog_reader.outputs.changes }}
+          draft: true
+          fail_on_unmatched_files: true
+          files: ${{ steps.assets_list.outputs.files }}
+          token: ${{ secrets.GITHUB_TOKEN }}
