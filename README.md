@@ -47,15 +47,15 @@ Using "projects mode" (with the `projects` keyword) creates a full Django projec
 openapi_to_django projects --help
 
 # create a new project using the default variables
-openapi_to_django projects openapi/example_openapi.json
+openapi_to_django projects openapi/example.openapi.json
 
 # create a new project with specified project and app names
-openapi_to_django projects openapi/example_openapi.json \
+openapi_to_django projects openapi/example.openapi.json \
   --project-name example_project \
   --app-name example_app
 
 # create a new project using custom templates
-openapi_to_django projects openapi/example_openapi.json \
+openapi_to_django projects openapi/example.openapi.json \
   --urls-template src/openapi_to_django/templates/urls.py-tpl \
   --views-template src/openapi_to_django/templates/views.py-tpl \
   --project-template src/openapi_to_django/templates/project_template/ \
@@ -71,15 +71,15 @@ Using "files mode" (with the `files` keyword) just outputs the generated `urls.p
 openapi_to_django files --help
 
 # generate files using the default variables
-openapi_to_django files openapi/example_openapi.json
+openapi_to_django files openapi/example.openapi.json
 
 # output files to a custom location
-openapi_to_django files openapi/example_openapi.json \
+openapi_to_django files openapi/example.openapi.json \
   --urls-target urls.py \
   --views-target views.py
 
 # generate files using custom templates
-openapi_to_django files openapi/example_openapi.json \
+openapi_to_django files openapi/example.openapi.json \
   --urls-template src/openapi_to_django/templates/urls.py-tpl \
   --views-template src/openapi_to_django/templates/views.py-tpl
 ```
