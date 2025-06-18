@@ -97,5 +97,5 @@ openapi_to_django files openapi/example_openapi.json \
 ## Licensing
 
 - Licenses for the project can be found in `LICENSES/`
-- `LICENSE.txt`: This repository is distributed under the [MIT License](https://opensource.org/license/mit). A symlink to this license exists in the project root folder.
+- `LICENSE.txt`: This repository is distributed under the [MIT License](https://opensource.org/license/mit).
 - `LICENSE_DJANGO.txt`: As elements of the Django source code have been used (including project and app templates, as well as some template rendering systems), the Django BSD 3-Clause License file is also included.
