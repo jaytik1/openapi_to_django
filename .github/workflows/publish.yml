@@ -1,8 +1,7 @@
-# This workflow will upload the release packages to PyPI when a release is created.
+# This workflow will upload the release packages to PyPI when a release is published.
 # It is based on the GitHub workflow (https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries).
-# THIS IS CURRENTLY CONFIGURED FOR TESTPYPI, IT WILL BE CHANGED TO PYPI WHEN THE RELEASE SYSTEM IS READY.
 
-name: Publish to TestPyPI
+name: Publish to PyPI
 
 on:
   release:
@@ -43,8 +42,8 @@ jobs:
       id-token: write  # this permission is mandatory for PyPI trusted publishing
 
     environment:
-      name: testpypi
-      url: https://test.pypi.org/p/openapi_to_django
+      name: pypi
+      url: https://pypi.org/p/openapi_to_django
 
     steps:
       - name: Retrieve release distributions
@@ -53,9 +52,8 @@ jobs:
           name: release-dists
           path: dist/
 
-      - name: Publish release distributions to TestPyPI
+      - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          repository-url: https://test.pypi.org/legacy/
           verbose: true
