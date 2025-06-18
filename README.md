@@ -2,7 +2,9 @@
 
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3c78a9)](https://www.python.org/downloads/release/python-31112/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-85ea2d)](https://spec.openapis.org/oas/v3.1.1.html) [![Django 5.1](https://img.shields.io/badge/Django-5.1-0c4b33)](https://docs.djangoproject.com/en/5.1/releases/5.1.10/) [![MIT License](https://img.shields.io/badge/License-MIT-orange)](https://opensource.org/license/mit)
 
-**Note that this project is currently a pre-release so changes are likely to occur.** Please use the repository's [GitHub Discussions](https://github.com/jaytik1/openapi_to_django/discussions) to report bugs, suggest features and ask any questions. Adding bug reports and feature requests as GitHub Issues may be supported in the future.
+**Note that this project is currently a pre-release so changes are likely to occur.**
+
+Please use the repository's [GitHub Discussions](https://github.com/jaytik1/openapi_to_django/discussions) to report bugs, suggest features and ask any questions. Adding bug reports and feature requests as GitHub Issues may be supported in the future.
 
 ## Overview
 
